@@ -1,0 +1,484 @@
+/* Shared chrome for the framework pages. The stage is the benchmark; the panel
+   floats over it with an opaque background (no backdrop blur, which would add
+   a per-frame filter pass to every measurement). */
+
+:root {
+	color-scheme: light;
+	--hb-surface: #fcfcfb;
+	--hb-surface-2: #f3f2ef;
+	--hb-border: #dcdad4;
+	--hb-text: #0b0b0b;
+	--hb-text-2: #52514e;
+	--hb-text-3: #7a7873;
+	--hb-accent: #2a78d6;
+	--hb-accent-text: #ffffff;
+	--hb-good: #1a7f4b;
+	--hb-bad: #c62f2f;
+	--fw-solid: #2a78d6;
+	--fw-ripple: #eb6834;
+	--fw-fable: #1baf7a;
+	--hb-shadow: 0 8px 28px rgb(0 0 0 / 0.18), 0 1px 3px rgb(0 0 0 / 0.12);
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		color-scheme: dark;
+		--hb-surface: #1a1a19;
+		--hb-surface-2: #242423;
+		--hb-border: #3a3a37;
+		--hb-text: #ffffff;
+		--hb-text-2: #c3c2b7;
+		--hb-text-3: #8f8e86;
+		--hb-accent: #3987e5;
+		--hb-accent-text: #ffffff;
+		--hb-good: #4cc38a;
+		--hb-bad: #f07171;
+		--fw-solid: #3987e5;
+		--fw-ripple: #d95926;
+		--fw-fable: #199e70;
+		--hb-shadow: 0 8px 28px rgb(0 0 0 / 0.5), 0 1px 3px rgb(0 0 0 / 0.4);
+	}
+}
+
+:root[data-theme='dark'] {
+	color-scheme: dark;
+	--hb-surface: #1a1a19;
+	--hb-surface-2: #242423;
+	--hb-border: #3a3a37;
+	--hb-text: #ffffff;
+	--hb-text-2: #c3c2b7;
+	--hb-text-3: #8f8e86;
+	--hb-accent: #3987e5;
+	--hb-accent-text: #ffffff;
+	--hb-good: #4cc38a;
+	--hb-bad: #f07171;
+	--fw-solid: #3987e5;
+	--fw-ripple: #d95926;
+	--fw-fable: #199e70;
+	--hb-shadow: 0 8px 28px rgb(0 0 0 / 0.5), 0 1px 3px rgb(0 0 0 / 0.4);
+}
+
+html,
+body {
+	margin: 0;
+	height: 100%;
+	overflow: hidden;
+	background: #0d1117;
+	font: 13px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	color: var(--hb-text);
+}
+
+.hb-stage {
+	position: fixed;
+	inset: 0;
+}
+
+.hb-stage > svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* ------------------------------------------------------------------ panel */
+
+.hb-panel {
+	position: fixed;
+	top: 12px;
+	right: 12px;
+	width: min(320px, calc(100vw - 24px));
+	max-height: calc(100vh - 24px);
+	display: flex;
+	flex-direction: column;
+	background: var(--hb-surface);
+	border: 1px solid var(--hb-border);
+	border-radius: 10px;
+	box-shadow: var(--hb-shadow);
+	overflow: hidden;
+	z-index: 10;
+}
+
+.hb-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 8px 8px 12px;
+	border-bottom: 1px solid var(--hb-border);
+}
+
+.hb-collapsed .hb-head {
+	border-bottom: 0;
+}
+
+.hb-title {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	flex: 1;
+}
+
+.hb-title strong {
+	font-size: 14px;
+	white-space: nowrap;
+}
+
+.hb-ver {
+	color: var(--hb-text-3);
+	font-size: 11px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.hb-pill {
+	font-variant-numeric: tabular-nums;
+	font-size: 12px;
+	color: var(--hb-text-2);
+	white-space: nowrap;
+}
+
+.hb-pill:empty {
+	display: none;
+}
+
+.hb-icon {
+	display: grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--hb-text-2);
+	cursor: pointer;
+}
+
+.hb-icon:hover {
+	background: var(--hb-surface-2);
+}
+
+.hb-icon svg {
+	transition: transform 0.15s;
+}
+
+.hb-collapsed .hb-icon svg {
+	transform: rotate(180deg);
+}
+
+.hb-body {
+	overflow-y: auto;
+	padding: 4px 12px 12px;
+}
+
+.hb-collapsed .hb-body {
+	display: none;
+}
+
+.hb-swatch {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	border-radius: 3px;
+	flex: none;
+}
+
+.hb-swatch[data-fw='solid'] {
+	background: var(--fw-solid);
+}
+.hb-swatch[data-fw='ripple'] {
+	background: var(--fw-ripple);
+}
+.hb-swatch[data-fw='fable'] {
+	background: var(--fw-fable);
+}
+
+.hb-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin: 8px 0 4px;
+}
+
+.hb-nav a {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 3px 8px;
+	border-radius: 999px;
+	color: var(--hb-text-2);
+	text-decoration: none;
+	border: 1px solid var(--hb-border);
+	font-size: 12px;
+}
+
+.hb-nav a:hover {
+	color: var(--hb-text);
+	background: var(--hb-surface-2);
+}
+
+.hb-nav a[aria-current='page'] {
+	color: var(--hb-text);
+	border-color: var(--hb-text-3);
+	font-weight: 600;
+}
+
+.hb-nav .hb-compare {
+	border-style: dashed;
+}
+
+.hb-panel section {
+	padding-top: 10px;
+	margin-top: 10px;
+	border-top: 1px solid var(--hb-border);
+}
+
+.hb-panel h2 {
+	margin: 0 0 8px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--hb-text-3);
+}
+
+.hb-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px 10px;
+}
+
+.hb-grid label {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	color: var(--hb-text-2);
+	font-size: 12px;
+	position: relative;
+	min-width: 0;
+}
+
+.hb-grid label output {
+	position: absolute;
+	right: 0;
+	top: 0;
+	font-variant-numeric: tabular-nums;
+	color: var(--hb-text);
+}
+
+.hb-wide {
+	grid-column: 1 / -1;
+}
+
+.hb-panel select,
+.hb-panel input[type='number'] {
+	font: inherit;
+	color: var(--hb-text);
+	background: var(--hb-surface-2);
+	border: 1px solid var(--hb-border);
+	border-radius: 6px;
+	padding: 4px 6px;
+	min-width: 0;
+}
+
+.hb-panel input[type='color'] {
+	width: 100%;
+	height: 28px;
+	padding: 2px;
+	border: 1px solid var(--hb-border);
+	border-radius: 6px;
+	background: var(--hb-surface-2);
+}
+
+.hb-panel input[type='color']:disabled {
+	opacity: 0.4;
+}
+
+.hb-panel input[type='range'] {
+	width: 100%;
+	margin: 4px 0 0;
+	accent-color: var(--hb-accent);
+}
+
+.hb-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 10px;
+}
+
+/* :where() keeps these at one-class specificity so .hb-primary below wins. */
+.hb-panel :where(button:not(.hb-icon, .hb-link)) {
+	font: inherit;
+	font-weight: 500;
+	padding: 5px 10px;
+	border-radius: 6px;
+	border: 1px solid var(--hb-border);
+	background: var(--hb-surface-2);
+	color: var(--hb-text);
+	cursor: pointer;
+}
+
+.hb-panel :where(button:not(.hb-icon, .hb-link)):hover {
+	border-color: var(--hb-text-3);
+}
+
+.hb-panel button.hb-primary {
+	background: var(--hb-accent);
+	border-color: var(--hb-accent);
+	color: var(--hb-accent-text);
+}
+
+.hb-panel button[aria-pressed='true'] {
+	border-color: var(--hb-accent);
+	color: var(--hb-accent);
+}
+
+.hb-panel button:disabled {
+	opacity: 0.5;
+	cursor: progress;
+}
+
+.hb-panel kbd,
+.hb-hint kbd {
+	font: 10px/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+	padding: 2px 4px;
+	border-radius: 3px;
+	border: 1px solid currentColor;
+	opacity: 0.7;
+}
+
+.hb-panel :focus-visible {
+	outline: 2px solid var(--hb-accent);
+	outline-offset: 1px;
+}
+
+.hb-metrics {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 6px 10px;
+	margin: 0;
+}
+
+.hb-metrics div {
+	display: flex;
+	justify-content: space-between;
+	gap: 6px;
+	min-width: 0;
+}
+
+.hb-metrics dt {
+	color: var(--hb-text-2);
+	font-size: 12px;
+}
+
+.hb-metrics dd {
+	margin: 0;
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.hb-metrics .hb-total dd {
+	font-weight: 700;
+}
+
+.hb-metrics div:last-child {
+	grid-column: 1 / -1;
+}
+
+.hb-bar {
+	height: 3px;
+	margin-top: 10px;
+	border-radius: 2px;
+	background: var(--hb-surface-2);
+	overflow: hidden;
+	visibility: hidden;
+}
+
+.hb-running .hb-bar {
+	visibility: visible;
+}
+
+.hb-bar > i {
+	display: block;
+	height: 100%;
+	width: 0;
+	background: var(--hb-accent);
+}
+
+.hb-progress {
+	margin: 6px 0 0;
+	color: var(--hb-text-2);
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
+
+.hb-table {
+	width: 100%;
+	margin-top: 10px;
+	border-collapse: collapse;
+	font-variant-numeric: tabular-nums;
+	font-size: 12px;
+}
+
+.hb-table caption {
+	text-align: left;
+	color: var(--hb-text-3);
+	font-size: 11px;
+	padding-bottom: 4px;
+}
+
+.hb-table th,
+.hb-table td {
+	padding: 3px 4px;
+	text-align: right;
+	border-bottom: 1px solid var(--hb-border);
+}
+
+.hb-table th[scope='row'],
+.hb-table thead th:first-child {
+	text-align: left;
+	font-weight: 500;
+}
+
+.hb-table thead th {
+	color: var(--hb-text-3);
+	font-weight: 500;
+}
+
+.hb-warn {
+	color: var(--hb-bad);
+	font-size: 11px;
+}
+
+.hb-link {
+	margin-top: 8px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--hb-accent);
+	font: inherit;
+	cursor: pointer;
+}
+
+.hb-hint {
+	margin: 12px 0 0;
+	color: var(--hb-text-3);
+	font-size: 11px;
+}
+
+.hb-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+}
+
+/* Embedded in the compare page: nothing but the stage. */
+.hb-embed .hb-panel {
+	display: none;
+}

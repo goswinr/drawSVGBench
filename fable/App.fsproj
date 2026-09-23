@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <!--
+    Fable.Ripple comes from the local fork in ../Fable.Ripple when it is there,
+    otherwise from NuGet. Set the environment variable FABLE_RIPPLE=nuget to force
+    the packages.
+  -->
+  <PropertyGroup>
+    <FableRippleSource Condition="'$(FABLE_RIPPLE)' == 'nuget'">nuget</FableRippleSource>
+    <FableRippleSource Condition="'$(FableRippleSource)' == '' And Exists('../Fable.Ripple/src/Fable.Ripple.Dom/Fable.Ripple.Dom.fsproj')">local</FableRippleSource>
+    <FableRippleSource Condition="'$(FableRippleSource)' == ''">nuget</FableRippleSource>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Interop.fs" />
+    <Compile Include="App.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Fable.Core" Version="5.2.0" />
+    <PackageReference Include="Fable.Browser.Dom" Version="2.20.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(FableRippleSource)' == 'nuget'">
+    <PackageReference Include="Fable.Ripple" Version="1.0.0-beta.3" />
+    <PackageReference Include="Fable.Ripple.Dom" Version="1.0.0-beta.2" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(FableRippleSource)' == 'local'">
+    <ProjectReference Include="../Fable.Ripple/src/Fable.Ripple.Dom/Fable.Ripple.Dom.fsproj" />
+  </ItemGroup>
+
+</Project>

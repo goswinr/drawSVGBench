@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.fs.js
+fable/fable_modules/
+fable/bin/
+fable/obj/
+# Separate git repository (the Fable.Ripple fork), used by fable/App.fsproj when present.
+Fable.Ripple/

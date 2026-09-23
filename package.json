@@ -1,0 +1,26 @@
+{
+  "name": "draw-svg-bench",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Full-screen SVG line rendering benchmark: SolidJS vs Ripple vs Fable.Ripple",
+  "type": "module",
+  "scripts": {
+    "postinstall": "dotnet tool restore",
+    "fable": "dotnet fable fable -c Release --noCache",
+    "dev": "dotnet fable watch fable --run vite",
+    "build": "npm run fable && vite build",
+    "preview": "vite preview",
+    "bench": "npm run build && vite preview --open",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ripple": "0.4.2",
+    "solid-js": "1.9.15"
+  },
+  "devDependencies": {
+    "@ripple-ts/vite-plugin": "0.4.2",
+    "typescript": "5.9.3",
+    "vite": "^8.3.0",
+    "vite-plugin-solid": "^2.11.14"
+  }
+}
