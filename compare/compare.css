@@ -13,6 +13,7 @@
 	--fw-solid: #2a78d6;
 	--fw-ripple: #eb6834;
 	--fw-fable: #1baf7a;
+	--fw-fable-grouped: #eda100;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,6 +32,7 @@
 		--fw-solid: #3987e5;
 		--fw-ripple: #d95926;
 		--fw-fable: #199e70;
+		--fw-fable-grouped: #c98500;
 	}
 }
 
@@ -49,6 +51,7 @@
 	--fw-solid: #3987e5;
 	--fw-ripple: #d95926;
 	--fw-fable: #199e70;
+	--fw-fable-grouped: #c98500;
 }
 
 * {
@@ -133,6 +136,9 @@ h2 {
 }
 [data-fw='fable'] {
 	--fw: var(--fw-fable);
+}
+[data-fw='fable-grouped'] {
+	--fw: var(--fw-fable-grouped);
 }
 
 .swatch {
@@ -485,7 +491,7 @@ button:disabled {
 
 .cells {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
 	gap: 12px;
 }
 
@@ -511,7 +517,7 @@ button:disabled {
 
 .bar-row {
 	display: grid;
-	grid-template-columns: 88px 1fr 52px 58px;
+	grid-template-columns: 148px 1fr 52px 58px;
 	align-items: center;
 	gap: 8px;
 	padding: 3px 0;
@@ -759,7 +765,7 @@ button:disabled {
 
 @media (max-width: 560px) {
 	.bar-row {
-		grid-template-columns: 72px 1fr 48px 50px;
+		grid-template-columns: 112px 1fr 48px 50px;
 		gap: 6px;
 	}
 	.cells {

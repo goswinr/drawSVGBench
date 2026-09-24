@@ -17,6 +17,7 @@
 	--fw-solid: #2a78d6;
 	--fw-ripple: #eb6834;
 	--fw-fable: #1baf7a;
+	--fw-fable-grouped: #eda100;
 	--hb-shadow: 0 8px 28px rgb(0 0 0 / 0.18), 0 1px 3px rgb(0 0 0 / 0.12);
 }
 
@@ -36,6 +37,7 @@
 		--fw-solid: #3987e5;
 		--fw-ripple: #d95926;
 		--fw-fable: #199e70;
+		--fw-fable-grouped: #c98500;
 		--hb-shadow: 0 8px 28px rgb(0 0 0 / 0.5), 0 1px 3px rgb(0 0 0 / 0.4);
 	}
 }
@@ -55,6 +57,7 @@
 	--fw-solid: #3987e5;
 	--fw-ripple: #d95926;
 	--fw-fable: #199e70;
+	--fw-fable-grouped: #c98500;
 	--hb-shadow: 0 8px 28px rgb(0 0 0 / 0.5), 0 1px 3px rgb(0 0 0 / 0.4);
 }
 
@@ -191,6 +194,9 @@ body {
 }
 .hb-swatch[data-fw='fable'] {
 	background: var(--fw-fable);
+}
+.hb-swatch[data-fw='fable-grouped'] {
+	background: var(--fw-fable-grouped);
 }
 
 .hb-nav {

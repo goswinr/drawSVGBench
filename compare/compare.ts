@@ -87,6 +87,8 @@ function renderCards() {
 		solid: '<code>createSignal(Float64Array)</code> · <code>&lt;For&gt;</code> over indices · one render effect per line (the compiler groups its attributes)',
 		ripple: '<code>track(Float64Array)</code> · keyed <code>@for</code> over indices · <code>flushSync</code> around each write',
 		fable: '<code>Var&lt;float[]&gt;</code> · <code>Html.each</code> over indices · one binding per attribute, synchronous flush',
+		'fable-grouped':
+			'The same F# app, but each line has one effect that writes all five attributes, the shape the Solid and Ripple compilers emit',
 	};
 	$('#cards').innerHTML = FRAMEWORKS.map(
 		(f) => `

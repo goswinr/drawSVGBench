@@ -77,6 +77,7 @@ export default defineConfig({
 				solid: resolve(root, 'solid/index.html'),
 				ripple: resolve(root, 'ripple/index.html'),
 				fable: resolve(root, 'fable/index.html'),
+				fableGrouped: resolve(root, 'fable-grouped/index.html'),
 			},
 		},
 	},

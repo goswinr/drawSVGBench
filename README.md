@@ -29,6 +29,8 @@ Pages:
 
 - `/`: compare page. Runs the suite in each framework (one at a time, full-screen iframe) and charts the medians.
 - `/solid/`, `/ripple/`, `/fable/`: each framework on its own, full-screen, with a control panel.
+- `/fable-grouped/`: the Fable.Ripple app again, with one effect per line instead of one per
+  attribute (see below).
 
 Keys on the framework pages: <kbd>Space</kbd> new array · <kbd>A</kbd> animate · <kbd>C</kbd> clear ·
 <kbd>H</kbd> hide the panel. Add `?lines=20000` to the URL to start with a given count.
@@ -78,9 +80,18 @@ changes. Each `<line>` binds its 4 coordinates plus the optional per-line stroke
 | SolidJS ([solid/main.tsx](solid/main.tsx))    | `createSignal(Float64Array, { equals: false })`  | `<For>`                  | one render effect per line (the compiler groups the attributes)   |
 | Ripple ([ripple/Stage.tsrx](ripple/Stage.tsrx)) | `track(Float64Array)`                            | keyed `@for`             | one render block per line (the compiler groups the attributes)    |
 | Fable.Ripple ([fable/App.fs](fable/App.fs))  | `Var.createWith Signal.referenceEquals float[]`  | `Html.each`              | one `svgAttr.custom` effect per attribute (5 per line)            |
+| Fable.Ripple (grouped), same file              | same                                             | same                     | one effect per line that writes all 5 attributes (`lineGrouped`)  |
 
 The style fields are separate signals/tracked values/Vars in all three, so changing the width does
 not wake the per-line bindings.
+
+**Why two Fable.Ripple entries.** Solid's and Ripple's compilers turn an element's dynamic
+attributes into one effect that re-evaluates them together and writes only the ones that changed.
+Fable.Ripple.Dom has no compiler: each `svgAttr.custom` binding is its own effect, so the idiomatic
+page creates, marks and tears down 5 reactive nodes per line where the others have 1. The grouped
+page (`fable-grouped/index.html` loads the same `App.fs.js` with `data-variant="grouped"`) writes that
+one effect by hand, with the public `Apply` + `Signal.effect` primitives. It shows how much of any
+gap is the per-attribute binding style rather than the reactive core.
 
 ## Fable.Ripple from NuGet or from a local fork
 
@@ -95,15 +106,17 @@ PowerShell).
 With the published Fable.Ripple `1.0.0-beta.3` / Dom `1.0.0-beta.2`, removing rows from `Html.each`
 gets quadratically slower when every row observes the same source, as here:
 
-| Lines   | Clear, NuGet beta.3 | Clear, fork `perf/amortized-observer-sweep` |
-| ------- | ------------------- | ------------------------------------------- |
-| 1,000   | 11.7 ms             | 0.9 ms                                      |
-| 10,000  | 1,666 ms            | 7.6 ms                                      |
-| 20,000  | 6,628 ms            | 14.3 ms                                     |
-| 50,000  | ~35 s               | 41 ms                                       |
-| 100,000 | (minutes)           | 85 ms                                       |
+Clear, script time, headless Chrome 154:
 
-Headless Chrome 154. Solid and Ripple clear 50,000 lines in about 16–23 ms in the same setup.
+| Lines   | NuGet beta.3 | Fork, 1st commit | Fork, all 3 commits | Fork, grouped page | Solid | Ripple |
+| ------- | ------------ | ---------------- | ------------------- | ------------------ | ----- | ------ |
+| 1,000   | 11.7 ms      | 0.9 ms           | 0.5 ms              |                    |       |        |
+| 10,000  | 1,666 ms     | 7.6 ms           | 5.0–5.7 ms          | 3.5 ms             | 2.8–3.4 ms | 2.5–2.9 ms |
+| 20,000  | 6,628 ms     | 14.3 ms          | 9.5 ms              |                    |            |            |
+| 50,000  | ~35 s        | 41 ms            | 27–37 ms            | 15–16 ms           | 16–22 ms   | 14–16 ms   |
+| 100,000 | (minutes)    | 85 ms            | 48–53 ms            | 31 ms              | 29–33 ms   | 25–36 ms   |
+
+Ranges are from separate runs on the same machine.
 
 Cause: `Dom.keyedEach` disposes each row's scope separately, and each `Scope.tearDown` compacted the
 shared source's whole observer list (`Graph.compactObservers`): one pass over up to 5 × N observers
@@ -111,9 +124,17 @@ for each of N rows. The single-pass compaction in `tearDown` only covered nodes 
 sibling row scopes. It affected **Clear**, shrinking the line count, and the untimed reset before
 each **Create** sample; create, update and recolor were not affected.
 
-The fork's fix: a teardown counts the dead entries it leaves in each source's observer list and only
-sweeps the list once they are half of it, which keeps the total linear. Dead entries waiting for a
-sweep are skipped when observers are walked, and not counted by `Signal.observerCount`.
+The fork's fix (branch `perfClear`, 3 commits):
+
+1. A teardown counts the dead entries it leaves in each source's observer list, and the list is
+   swept only once they are half of it, which makes the total linear. Dead entries waiting for a
+   sweep are skipped when observers are walked, and not counted by `Signal.observerCount`.
+2. The sweep check runs once, when the outermost flush, batch or disposal ends. A list cleared in
+   one flush leaves every entry of the shared source dead, so the source drops its list without a pass.
+3. `Html.each` clears with one `textContent = ""` when its parent holds only its rows and anchor,
+   instead of one `removeChild` per row.
+
+The remaining gap between the two Fable.Ripple pages is the 5-vs-1 effects per line described above.
 
 ## Layout
 
@@ -125,6 +146,7 @@ shared/frameworks.ts names and versions (versions injected by vite.config.ts)
 solid/               SolidJS page
 ripple/              Ripple page (Stage.tsrx + a bridge so the harness can write tracked state)
 fable/               Fable.Ripple page (App.fs; Interop.fs binds the shared TS harness)
+fable-grouped/       the same app with one effect per line (only an index.html)
 Fable.Ripple/        optional local clone of Fable.Ripple, used instead of NuGet when present
 compare/ + index.html  compare page
 ```

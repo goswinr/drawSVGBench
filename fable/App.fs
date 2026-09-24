@@ -64,6 +64,60 @@ let private line (i: int) : DomItem =
             optionalAttr "stroke" (fun () -> lineStroke colorMode.Value data.Value i count.Value)
         ]
 
+/// The same line with ONE effect for all five attributes: the shape the Solid
+/// and Ripple compilers emit for an element with several dynamic attributes.
+/// Every attribute is re-evaluated when any input changes, and written only
+/// when its value changed.
+let private lineGrouped (i: int) : DomItem =
+    let o = i * 4
+
+    Svg.line
+        [
+            Apply(fun element ->
+                let mutable x1 = nan
+                let mutable y1 = nan
+                let mutable x2 = nan
+                let mutable y2 = nan
+                let mutable stroke = ""
+
+                Signal.effect (fun () ->
+                    let d = data.Value
+
+                    if d.[o] <> x1 then
+                        x1 <- d.[o]
+                        element.setAttribute ("x1", string x1)
+
+                    if d.[o + 1] <> y1 then
+                        y1 <- d.[o + 1]
+                        element.setAttribute ("y1", string y1)
+
+                    if d.[o + 2] <> x2 then
+                        x2 <- d.[o + 2]
+                        element.setAttribute ("x2", string x2)
+
+                    if d.[o + 3] <> y2 then
+                        y2 <- d.[o + 3]
+                        element.setAttribute ("y2", string y2)
+
+                    let s = lineStroke colorMode.Value d i count.Value
+
+                    if s <> stroke then
+                        stroke <- s
+
+                        // `isNull` compiles to `== null`, which also catches the `undefined` from TypeScript.
+                        if isNull s then
+                            element.removeAttribute "stroke"
+                        else
+                            element.setAttribute ("stroke", s)
+                )
+                |> ignore
+            )
+        ]
+
+/// `fable-grouped/index.html` loads this same app flagged to use `lineGrouped`.
+let private grouped =
+    Browser.Dom.document.documentElement.getAttribute "data-variant" = "grouped"
+
 let private view () =
     Svg.svg
         [
@@ -80,7 +134,13 @@ let private view () =
                     svgAttr.custom ("stroke-linecap", fun () -> linecap.Value)
                     svgAttr.custom ("stroke-dasharray", fun () -> dashArray dash.Value width.Value)
 
-                    Html.each (fun () -> indices.Value) id line
+                    Html.each
+                        (fun () -> indices.Value)
+                        id
+                        (if grouped then
+                             lineGrouped
+                         else
+                             line)
                 ]
         ]
 
@@ -88,7 +148,11 @@ let private view () =
 // updated when setData / setStyle return.
 startHarness
     { new IBenchApp with
-        member _.id = "fable"
+        member _.id =
+            if grouped then
+                "fable-grouped"
+            else
+                "fable"
 
         member _.mount(container, style) =
             applyStyle style
