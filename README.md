@@ -74,6 +74,8 @@ Pages:
 Keys on the framework pages: <kbd>Space</kbd> new array · <kbd>A</kbd> animate · <kbd>C</kbd> clear ·
 <kbd>H</kbd> hide the panel. Add `?lines=20000` to the URL to start with a given count.
 
+![The Fable.Ripple page: 1,000 coloured lines full-screen, with the control panel on the right showing the style options and a suite result](docs/screen.png)
+
 ## Styling options
 
 Colour mode (uniform / hue by angle / hue by length / hue by index), uniform colour, width mode
