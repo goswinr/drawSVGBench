@@ -43,6 +43,8 @@ const isolation = {
 };
 
 export default defineConfig({
+	// Relative asset URLs, so the build also works from a sub-path such as GitHub Pages' /drawSVGBench/.
+	base: './',
 	plugins: [
 		// Solid's JSX transform must not touch the Ripple or Fable pages.
 		solid({ include: ['solid/**/*.tsx'] }),

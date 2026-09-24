@@ -11,7 +11,8 @@
     "build": "npm run fable && vite build",
     "preview": "vite preview",
     "bench": "npm run build && vite preview --open",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "deploy": "npm run build && node scripts/deploy.mjs"
   },
   "dependencies": {
     "ripple": "0.4.2",

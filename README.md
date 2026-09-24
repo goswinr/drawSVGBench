@@ -1,16 +1,50 @@
 # drawSVGBench
 
-A full-screen SVG line-drawing benchmark for **SolidJS 1.9**, **Ripple** (ripple-ts) and **Fable.Ripple** (F#).
+A full-screen SVG line-drawing benchmark for **SolidJS**, **Ripple** (ripple-ts) and **Fable.Ripple** (F#).
+
+**Live demo: <https://goswinr.github.io/drawSVGBench/>** (see [Live demo](#live-demo) for its limits)
+
+![The compare page: bar charts of create, update, recolor and clear times for the four entries at 2,000 and 20,000 lines](docs/compare.png)
 
 The core data structure is one `Float64Array` of random floats; every 4 floats are one line
-(`x1 y1 x2 y2`, in pixels), at most 10% of the viewport width long. Each framework renders `data.length / 4` `<line>` elements from it,
-with styling options, and replaces the array with a new one to update the DOM. All three pages use
-the same data generator, the same style helpers and the same timing code. Only the rendering layer
-differs.
+(`x1 y1 x2 y2`, in pixels), at most 10% of the viewport width long. Each framework renders
+`data.length / 4` `<line>` elements from it, with styling options, and replaces the array with a new
+one to update the DOM. Every page uses the same data generator, the same style helpers and the same
+timing code. Only the rendering layer differs.
+
+## Results
+
+One run of the compare page, 5,000 lines, 20 measured runs + 5 warmup per cell, uniform colour and
+varied widths. Microsoft Edge 152, Windows 11, 20 cores, viewport 3832×1994 at 1×, production
+build, 2026-09-24. Median total ms (script + render), with the ratio to the fastest in each row:
+
+| Op                 | SolidJS 1.9.15 | Ripple 0.4.2   | Fable.Ripple   | Fable.Ripple (grouped) |
+| ------------------ | -------------- | -------------- | -------------- | ---------------------- |
+| Create             | **15.9**       | 19.2 (1.21×)   | 20.0 (1.26×)   | 16.1 (1.01×)           |
+| Update             | 15.1 (1.11×)   | 16.9 (1.24×)   | 15.6 (1.14×)   | **13.6**               |
+| Recolor            | 5.15 (1.23×)   | 4.64 (1.11×)   | **4.20**       | 4.28 (1.02×)           |
+| Clear              | 2.64 (1.12×)   | **2.37**       | 3.56 (1.51×)   | 2.54 (1.08×)           |
+| Geomean vs fastest | 1.11×          | 1.13×          | 1.21×          | 1.03×                  |
+
+Both Fable.Ripple entries are built with Fable 5.17.2 against a fork with the changes described in
+[Changes Fable.Ripple needed](#changes-fableripple-needed). Render time is about the same for all four
+(1.9–2.0 ms on create, 2.6–2.7 ms on update, 2.5–2.6 ms on recolor, 0.5 ms on clear), so the
+differences come from script time. Every run passed the DOM check.
+
+Run-to-run noise is 10–30% at this size, so treat differences under about 20% as ties. What has held
+up over earlier runs (headless Chrome, 1,000 to 100,000 lines):
+
+- Create, update and recolor have no consistent winner.
+- Idiomatic Fable.Ripple is the slowest at clear and create, because it runs 6 effects per line where
+  Solid's and Ripple's compilers emit 1. With one hand-written effect per line (the grouped entry) it
+  matches Solid and Ripple.
+- Recolor is mostly the browser's style recalculation, not framework work.
+
+The screenshot above is the compare page from a separate run at 2,000 and 20,000 lines.
 
 ## Quick start
 
-Requires Node 20.19+ and the .NET SDK 8+ (for the Fable compiler).
+Requires Node 20.19+ and the .NET 10 SDK (for the Fable compiler).
 
 ```sh
 npm install          # also runs `dotnet tool restore` for Fable
@@ -24,6 +58,7 @@ npm run bench        # Fable release build + Vite production build, then opens t
 | `npm run preview`   | Serves `dist/`                                                          |
 | `npm run bench`     | `build` + `preview --open`                                              |
 | `npm run typecheck` | `tsc --noEmit` over the TypeScript sources                              |
+| `npm run deploy`    | `build`, then force-pushes `dist/` to the `gh-pages` branch             |
 
 Pages:
 
@@ -65,7 +100,8 @@ across updates: it costs work on create, but an update does not rewrite it.
 - Every op/line-count cell has a wall-clock budget (default 20 s, setup included). When it is spent,
   the rest of the warmup is skipped and measuring stops after 3 samples (or after 1 once 3× the budget
   is gone). Such cells are marked `*`.
-- The server sends COOP/COEP headers, so `performance.now()` has 5 µs resolution instead of 100 µs.
+- The dev and preview servers send COOP/COEP headers, so `performance.now()` has 5 µs resolution
+  instead of 100 µs.
 
 Use the production build (`npm run bench`) for numbers, in a normal (headed) browser window with
 nothing else busy. Dev builds include framework debug code; Fable's Debug build also enables
@@ -91,25 +127,41 @@ not wake the per-line bindings.
 **Why two Fable.Ripple entries.** Solid's and Ripple's compilers turn an element's dynamic
 attributes into one effect that re-evaluates them together and writes only the ones that changed.
 Fable.Ripple.Dom has no compiler: each `svgAttr.custom` binding is its own effect, so the idiomatic
-page creates, marks and tears down 5 reactive nodes per line where the others have 1. The grouped
+page creates, marks and tears down 6 reactive nodes per line where the others have 1. The grouped
 page (`fable-grouped/index.html` loads the same `App.fs.js` with `data-variant="grouped"`) writes that
 one effect by hand, with the public `Apply` + `Signal.effect` primitives. It shows how much of any
 gap is the per-attribute binding style rather than the reactive core.
 
-## Fable.Ripple from NuGet or from a local fork
+## Changes Fable.Ripple needed
 
-If `./Fable.Ripple` exists (a clone of the Fable.Ripple repository, ignored by this repo's git), the
-F# page is built against its `src/` instead of the NuGet packages, and the page shows
-`fork <branch>@<commit>` as its version. `npm run dev` then also recompiles on edits to the fork.
-To force the packages, set `FABLE_RIPPLE=nuget` (e.g. `$env:FABLE_RIPPLE='nuget'; npm run build` in
-PowerShell).
+The published results use a fork of [Fable.Ripple](https://github.com/fable-hub/Fable.Ripple): four
+commits on top of `cafa35a` (the 1.0.0-beta.4 release). They are not upstream yet. Without them the
+F# page still works, but clearing or shrinking the list is quadratic (below).
 
-## Known finding: Fable.Ripple clear is O(n²) in 1.0.0-beta.3
+| Commit    | Package          | Change                                                                                                                                                                                                  |
+| --------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ee78536` | Fable.Ripple     | A teardown counts the dead entries it leaves in each source's observer list, and the list is swept only once they are half of it, so the total work is linear. Observer walks skip the dead entries. |
+| `a2318ef` | Fable.Ripple     | The sweep check runs once, when the outermost flush, batch or disposal ends. A list cleared in one flush leaves every entry of the shared source dead, so the source drops its list without a pass. |
+| `706f69d` | Fable.Ripple.Dom | `Html.each` clears with one `textContent = ""` when its parent holds only its rows and anchor, instead of one `removeChild` per row.                                                                  |
+| `7c30aac` | Fable.Ripple     | Internal arrays are cleared with `length = 0` instead of `ResizeArray.Clear()`, which Fable compiles to `splice(0)`.                                                                                   |
+
+The first three come with tests in the fork's suites.
+
+The app itself needed no library changes, only three choices in [fable/App.fs](fable/App.fs):
+
+- `Var.createWith Signal.referenceEquals` for the data. `Var.create` compares with structural
+  equality, which would walk the whole array on every write.
+- `optionalAttr`, a small `Apply` + `Signal.effect` helper, because `svgAttr.custom` always sets its
+  attribute and the per-line `stroke` and `stroke-width` must be removed in uniform mode.
+- `lineGrouped` for the grouped entry: the same public primitives, one effect for all six attributes.
+
+### Why: clear was O(n²) in the published packages
 
 With the published Fable.Ripple `1.0.0-beta.3` / Dom `1.0.0-beta.2`, removing rows from `Html.each`
-gets quadratically slower when every row observes the same source, as here:
+gets quadratically slower when every row observes the same source, as here. The beta.4 release does
+not change the code involved.
 
-Clear, script time, headless Chrome 154:
+Clear, script time, headless Chrome 154, measured before `7c30aac`:
 
 | Lines   | NuGet beta.3 | Fork, 1st commit | Fork, all 3 commits | Fork, grouped page | Solid | Ripple |
 | ------- | ------------ | ---------------- | ------------------- | ------------------ | ----- | ------ |
@@ -121,23 +173,28 @@ Clear, script time, headless Chrome 154:
 
 Ranges are from separate runs on the same machine.
 
-Cause: `Dom.keyedEach` disposes each row's scope separately, and each `Scope.tearDown` compacted the
-shared source's whole observer list (`Graph.compactObservers`): one pass over up to 5 × N observers
-for each of N rows. The single-pass compaction in `tearDown` only covered nodes within one scope, not
-sibling row scopes. It affected **Clear**, shrinking the line count, and the untimed reset before
-each **Create** sample; create, update and recolor were not affected.
+These runs had 5 bindings per line (before per-line widths). Cause: `Dom.keyedEach` disposes each
+row's scope separately, and each `Scope.tearDown` compacted the shared source's whole observer list
+(`Graph.compactObservers`): one pass over up to 5 × N observers for each of N rows. The single-pass
+compaction in `tearDown` only covered nodes within one scope, not sibling row scopes. It affected
+**Clear**, shrinking the line count, and the untimed reset before each **Create** sample; create,
+update and recolor were not affected.
 
-The fork's fix (branch `perfClear`, 3 commits):
+The remaining gap between the two Fable.Ripple entries is the per-attribute effects described above.
 
-1. A teardown counts the dead entries it leaves in each source's observer list, and the list is
-   swept only once they are half of it, which makes the total linear. Dead entries waiting for a
-   sweep are skipped when observers are walked, and not counted by `Signal.observerCount`.
-2. The sweep check runs once, when the outermost flush, batch or disposal ends. A list cleared in
-   one flush leaves every entry of the shared source dead, so the source drops its list without a pass.
-3. `Html.each` clears with one `textContent = ""` when its parent holds only its rows and anchor,
-   instead of one `removeChild` per row.
+### Building against NuGet or the fork
 
-The remaining gap between the two Fable.Ripple pages is the 5-vs-1 effects per line described above.
+If `./Fable.Ripple` exists (a clone of the fork, ignored by this repo's git), the F# page is built
+against its `src/` instead of the NuGet packages, and the page shows `fork <branch>@<commit>` as its
+version. `npm run dev` then also recompiles on edits to the fork. To force the packages, set
+`FABLE_RIPPLE=nuget` (e.g. `$env:FABLE_RIPPLE='nuget'; npm run build` in PowerShell).
+
+## Live demo
+
+<https://goswinr.github.io/drawSVGBench/> is the production build with the fork, published with
+`npm run deploy`. GitHub Pages cannot send the COOP/COEP headers, so `performance.now()` is rounded
+to 100 µs there instead of 5 µs. That is fine at thousands of lines, where each op takes
+milliseconds; for small counts, or numbers to quote, run `npm run bench` locally.
 
 ## Layout
 
@@ -152,6 +209,8 @@ fable/               Fable.Ripple page (App.fs; Interop.fs binds the shared TS h
 fable-grouped/       the same app with one effect per line (only an index.html)
 Fable.Ripple/        optional local clone of Fable.Ripple, used instead of NuGet when present
 compare/ + index.html  compare page
+scripts/deploy.mjs   pushes dist/ to the gh-pages branch
+docs/                README images
 ```
 
 `window.__bench` on each framework page exposes `run(config, onProgress)` and `check()`, so the suite
