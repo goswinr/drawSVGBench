@@ -10,6 +10,7 @@ open Browser.Types
 type LineStyle =
     abstract colorMode: string
     abstract color: string
+    abstract widthMode: string
     abstract width: float
     abstract opacity: float
     abstract linecap: string
@@ -27,6 +28,10 @@ type IBenchApp =
 /// Per-line stroke for a colour mode, or null in "uniform" mode.
 [<ImportMember("../shared/lines.ts")>]
 let lineStroke (mode: string) (data: float[]) (i: int) (count: int) : string = jsNative
+
+/// Per-line stroke width for a width mode, or null in "uniform" mode.
+[<ImportMember("../shared/lines.ts")>]
+let lineWidth (mode: string) (i: int) : string = jsNative
 
 [<ImportMember("../shared/lines.ts")>]
 let dashArray (dash: string) (width: float) : string = jsNative

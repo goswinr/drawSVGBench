@@ -3,7 +3,7 @@
 A full-screen SVG line-drawing benchmark for **SolidJS 1.9**, **Ripple** (ripple-ts) and **Fable.Ripple** (F#).
 
 The core data structure is one `Float64Array` of random floats; every 4 floats are one line
-(`x1 y1 x2 y2`, in pixels). Each framework renders `data.length / 4` `<line>` elements from it,
+(`x1 y1 x2 y2`, in pixels), at most 10% of the viewport width long. Each framework renders `data.length / 4` `<line>` elements from it,
 with styling options, and replaces the array with a new one to update the DOM. All three pages use
 the same data generator, the same style helpers and the same timing code. Only the rendering layer
 differs.
@@ -37,10 +37,12 @@ Keys on the framework pages: <kbd>Space</kbd> new array · <kbd>A</kbd> animate 
 
 ## Styling options
 
-Colour mode (uniform / hue by angle / hue by length / hue by index), uniform colour, stroke width,
-opacity, line cap, dash pattern (solid / dashed / dotted) and background. Uniform mode sets
-`stroke` once on the parent `<g>`. The hue modes give every line its own `stroke` attribute, so they
-also add work to every update.
+Colour mode (uniform / hue by angle / hue by length / hue by index), uniform colour, width mode
+(varied / uniform), uniform stroke width, opacity, line cap, dash pattern (solid / dashed / dotted)
+and background. Uniform mode sets `stroke` once on the parent `<g>`. The hue modes give every line
+its own `stroke` attribute, so they also add work to every update. Varied width (the default) gives
+every line its own `stroke-width` from 1.5 to 5 px, hashed from its index, so a line keeps its width
+across updates: it costs work on create, but an update does not rewrite it.
 
 ## What is measured
 
@@ -59,7 +61,7 @@ also add work to every update.
   for vsync and off-thread rasterization are excluded.
 - New arrays are generated before the timer starts, and each sample starts from a settled frame.
 - After each op the DOM is checked against the data: line count, exact coordinates and the expected
-  stroke on 5 lines. The compare page shows a ✗ for any mismatch.
+  stroke and stroke-width on 5 lines. The compare page shows a ✗ for any mismatch.
 - Every op/line-count cell has a wall-clock budget (default 20 s, setup included). When it is spent,
   the rest of the warmup is skipped and measuring stops after 3 samples (or after 1 once 3× the budget
   is gone). Such cells are marked `*`.
@@ -73,14 +75,15 @@ Fable.Ripple's hot-reload bookkeeping.
 
 All three keep the whole array in **one** reactive source and render a list over `range(count)`,
 where `count` is derived from `data.length / 4`. The index list is only rebuilt when the count
-changes. Each `<line>` binds its 4 coordinates plus the optional per-line stroke to the source.
+changes. Each `<line>` binds its 4 coordinates plus the optional per-line stroke and stroke-width
+to the source.
 
 | Framework                    | Source                                           | List                     | Per-line bindings                                                 |
 | ---------------------------- | ------------------------------------------------ | ------------------------ | ----------------------------------------------------------------- |
 | SolidJS ([solid/main.tsx](solid/main.tsx))    | `createSignal(Float64Array, { equals: false })`  | `<For>`                  | one render effect per line (the compiler groups the attributes)   |
 | Ripple ([ripple/Stage.tsrx](ripple/Stage.tsrx)) | `track(Float64Array)`                            | keyed `@for`             | one render block per line (the compiler groups the attributes)    |
-| Fable.Ripple ([fable/App.fs](fable/App.fs))  | `Var.createWith Signal.referenceEquals float[]`  | `Html.each`              | one `svgAttr.custom` effect per attribute (5 per line)            |
-| Fable.Ripple (grouped), same file              | same                                             | same                     | one effect per line that writes all 5 attributes (`lineGrouped`)  |
+| Fable.Ripple ([fable/App.fs](fable/App.fs))  | `Var.createWith Signal.referenceEquals float[]`  | `Html.each`              | one `svgAttr.custom` effect per attribute (6 per line)            |
+| Fable.Ripple (grouped), same file              | same                                             | same                     | one effect per line that writes all 6 attributes (`lineGrouped`)  |
 
 The style fields are separate signals/tracked values/Vars in all three, so changing the width does
 not wake the per-line bindings.

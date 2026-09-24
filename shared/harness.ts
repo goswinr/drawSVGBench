@@ -37,7 +37,7 @@ export interface BenchHandle {
 	name: string;
 	version: string;
 	run(cfg: SuiteConfig, onProgress?: (p: Progress) => void): Promise<SuiteResult>;
-	/** Verifies the current DOM against the current data (count, coordinates, stroke). */
+	/** Verifies the current DOM against the current data (count, coordinates, stroke, stroke-width). */
 	check(): { ok: boolean; message: string };
 }
 
@@ -132,7 +132,7 @@ export function startHarness(app: BenchApp): void {
 				suiteRunning = false;
 			}
 		},
-		check: () => verify(stage, data, style.colorMode),
+		check: () => verify(stage, data, style),
 	};
 
 	if (embed) {
@@ -164,6 +164,7 @@ export function startHarness(app: BenchApp): void {
 	const syncStyleControls = () => {
 		field('colorMode').value = style.colorMode;
 		field('color').value = style.color;
+		field('widthMode').value = style.widthMode;
 		field('width').value = String(style.width);
 		field('opacity').value = String(style.opacity);
 		field('linecap').value = style.linecap;
@@ -172,6 +173,7 @@ export function startHarness(app: BenchApp): void {
 		out('width').textContent = String(style.width);
 		out('opacity').textContent = style.opacity.toFixed(2);
 		(field('color') as HTMLInputElement).disabled = style.colorMode !== 'uniform';
+		(field('width') as HTMLInputElement).disabled = style.widthMode !== 'uniform';
 	};
 	syncStyleControls();
 
@@ -307,6 +309,7 @@ export function startHarness(app: BenchApp): void {
 				break;
 			case 'colorMode':
 			case 'color':
+			case 'widthMode':
 			case 'linecap':
 			case 'dash':
 			case 'background':
@@ -406,7 +409,7 @@ export function startHarness(app: BenchApp): void {
 	// -------------------------------------------------------------- initial
 
 	timedData('create', () => randomLines(settings.lines, innerWidth, innerHeight)).then(() => {
-		const check = verify(stage, data, style.colorMode);
+		const check = verify(stage, data, style);
 		if (!check.ok) console.error(`[drawSVGBench] ${info.name} rendered the wrong DOM: ${check.message}`);
 	});
 }
@@ -458,7 +461,11 @@ function panelHtml(current: BenchApp['id']): string {
 					<option value="index">Hue by index</option>
 				</select></label>
 				<label>Uniform colour <input type="color" name="color"></label>
-				<label>Width <output data-out="width"></output><input type="range" name="width" min="0.25" max="8" step="0.25"></label>
+				<label>Width <select name="widthMode">
+					<option value="varied">Varied, 1.5–5 px</option>
+					<option value="uniform">Uniform</option>
+				</select></label>
+				<label>Uniform width <output data-out="width"></output><input type="range" name="width" min="0.25" max="8" step="0.25"></label>
 				<label>Opacity <output data-out="opacity"></output><input type="range" name="opacity" min="0.05" max="1" step="0.05"></label>
 				<label>Line cap <select name="linecap">
 					<option value="butt">Butt</option>

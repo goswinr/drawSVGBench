@@ -15,7 +15,7 @@ export const FRAMEWORKS: FrameworkInfo[] = [
 	{ id: 'solid', name: 'SolidJS', version: __VERSIONS__.solid, path: 'solid/', language: 'TSX' },
 	{ id: 'ripple', name: 'Ripple', version: __VERSIONS__.ripple, path: 'ripple/', language: 'TSRX' },
 	{ id: 'fable', name: 'Fable.Ripple', version: __VERSIONS__.fable, path: 'fable/', language: 'F#' },
-	// The same F# app, rendering each line with one effect instead of five.
+	// The same F# app, rendering each line with one effect instead of six.
 	{ id: 'fable-grouped', name: 'Fable.Ripple (grouped)', version: __VERSIONS__.fable, path: 'fable-grouped/', language: 'F#' },
 ];
 

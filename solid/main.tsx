@@ -1,7 +1,7 @@
 import { batch, createMemo, createSignal, For } from 'solid-js';
 import { render } from 'solid-js/web';
 import { startHarness } from '../shared/harness';
-import { dashArray, lineStroke, range, type LineStyle } from '../shared/lines';
+import { dashArray, lineStroke, lineWidth, range, type LineStyle } from '../shared/lines';
 
 // One signal holds the whole float array; `equals: false` because every
 // update is a new array anyway and there is nothing to compare.
@@ -10,6 +10,7 @@ const [data, setData] = createSignal(new Float64Array(0), { equals: false });
 // One signal per style field, so a width change does not wake the per-line bindings.
 const [colorMode, setColorMode] = createSignal<LineStyle['colorMode']>('uniform');
 const [color, setColor] = createSignal('');
+const [widthMode, setWidthMode] = createSignal<LineStyle['widthMode']>('uniform');
 const [width, setWidth] = createSignal(1);
 const [opacity, setOpacity] = createSignal(1);
 const [linecap, setLinecap] = createSignal<LineStyle['linecap']>('butt');
@@ -20,6 +21,7 @@ function applyStyle(s: LineStyle) {
 	batch(() => {
 		setColorMode(s.colorMode);
 		setColor(s.color);
+		setWidthMode(s.widthMode);
 		setWidth(s.width);
 		setOpacity(s.opacity);
 		setLinecap(s.linecap);
@@ -53,6 +55,7 @@ function Stage() {
 								x2={data()[o + 2]}
 								y2={data()[o + 3]}
 								stroke={lineStroke(colorMode(), data(), i, count())}
+								stroke-width={lineWidth(widthMode(), i)}
 							/>
 						);
 					}}

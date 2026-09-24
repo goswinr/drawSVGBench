@@ -12,6 +12,7 @@ let private data = Var.createWith Signal.referenceEquals ([||]: float[])
 // One source per style field, so a width change does not wake the per-line bindings.
 let private colorMode = Var.create "uniform"
 let private color = Var.create ""
+let private widthMode = Var.create "uniform"
 let private width = Var.create 1.0
 let private opacity = Var.create 1.0
 let private linecap = Var.create "butt"
@@ -28,6 +29,7 @@ let private applyStyle (s: LineStyle) =
     Signal.batch (fun () ->
         colorMode.Value <- s.colorMode
         color.Value <- s.color
+        widthMode.Value <- s.widthMode
         width.Value <- s.width
         opacity.Value <- s.opacity
         linecap.Value <- s.linecap
@@ -37,7 +39,7 @@ let private applyStyle (s: LineStyle) =
 
 /// A reactive attribute that is removed while the callback returns
 /// null/undefined (`svgAttr.custom` always sets it). A line carries its own
-/// stroke only outside "uniform" mode.
+/// stroke and stroke-width only outside "uniform" mode.
 let private optionalAttr (name: string) (value: unit -> string) : DomItem =
     Apply(fun element ->
         Signal.effect (fun () ->
@@ -62,9 +64,10 @@ let private line (i: int) : DomItem =
             svgAttr.custom ("x2", fun () -> string data.Value.[o + 2])
             svgAttr.custom ("y2", fun () -> string data.Value.[o + 3])
             optionalAttr "stroke" (fun () -> lineStroke colorMode.Value data.Value i count.Value)
+            optionalAttr "stroke-width" (fun () -> lineWidth widthMode.Value i)
         ]
 
-/// The same line with ONE effect for all five attributes: the shape the Solid
+/// The same line with ONE effect for all six attributes: the shape the Solid
 /// and Ripple compilers emit for an element with several dynamic attributes.
 /// Every attribute is re-evaluated when any input changes, and written only
 /// when its value changed.
@@ -79,6 +82,7 @@ let private lineGrouped (i: int) : DomItem =
                 let mutable x2 = nan
                 let mutable y2 = nan
                 let mutable stroke = ""
+                let mutable strokeWidth = ""
 
                 Signal.effect (fun () ->
                     let d = data.Value
@@ -109,6 +113,16 @@ let private lineGrouped (i: int) : DomItem =
                             element.removeAttribute "stroke"
                         else
                             element.setAttribute ("stroke", s)
+
+                    let w = lineWidth widthMode.Value i
+
+                    if w <> strokeWidth then
+                        strokeWidth <- w
+
+                        if isNull w then
+                            element.removeAttribute "stroke-width"
+                        else
+                            element.setAttribute ("stroke-width", w)
                 )
                 |> ignore
             )

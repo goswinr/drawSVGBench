@@ -1,4 +1,4 @@
-import { EMPTY, lineStroke, randomLines, type BenchApp, type FrameworkId, type LineStyle } from './lines';
+import { EMPTY, lineStroke, lineWidth, randomLines, type BenchApp, type FrameworkId, type LineStyle } from './lines';
 
 export interface Sample {
 	/** Framework work + DOM mutation: the synchronous `setData`/`setStyle` call. */
@@ -138,9 +138,9 @@ export function stats(values: number[]): Stats {
 /**
  * Checks that the framework really rendered `data`: the right number of
  * <line> elements, in order, with exact coordinates and the expected stroke
- * on a handful of lines.
+ * and stroke-width on a handful of lines.
  */
-export function verify(stage: HTMLElement, data: Float64Array, colorMode: LineStyle['colorMode']): { ok: boolean; message: string } {
+export function verify(stage: HTMLElement, data: Float64Array, style: LineStyle): { ok: boolean; message: string } {
 	const lines = stage.getElementsByTagNameNS('http://www.w3.org/2000/svg', 'line');
 	const count = data.length / 4;
 	if (lines.length !== count) return { ok: false, message: `expected ${count} <line>, found ${lines.length}` };
@@ -155,9 +155,12 @@ export function verify(stage: HTMLElement, data: Float64Array, colorMode: LineSt
 				return { ok: false, message: `line ${i} ${attrs[k]}="${got}", expected ${data[i * 4 + k]}` };
 			}
 		}
-		const stroke = lineStroke(colorMode, data, i, count) ?? null;
+		const stroke = lineStroke(style.colorMode, data, i, count) ?? null;
 		const gotStroke = el.getAttribute('stroke');
 		if (gotStroke !== stroke) return { ok: false, message: `line ${i} stroke="${gotStroke}", expected ${stroke}` };
+		const width = lineWidth(style.widthMode, i) ?? null;
+		const gotWidth = el.getAttribute('stroke-width');
+		if (gotWidth !== width) return { ok: false, message: `line ${i} stroke-width="${gotWidth}", expected ${width}` };
 	}
 	return { ok: true, message: `${count} lines, ${probes.size} spot-checked` };
 }
@@ -256,7 +259,7 @@ export async function runSuite(
 					}
 				}
 				// Correctness is checked on the first measured iteration, off the clock.
-				if (k === cfg.warmup) check = verify(stage, data, style.colorMode);
+				if (k === cfg.warmup) check = verify(stage, data, style);
 				if (k >= cfg.warmup) samples.push(sample);
 				step++;
 				onProgress?.({ op, count, iteration: k + 1, iterations: perRun, fraction: step / totalSteps });

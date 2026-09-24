@@ -42,6 +42,8 @@ interface Cell {
 
 const STORE_CONFIG = 'drawsvgbench:compare-config';
 const STORE_RUN = 'drawsvgbench:compare-run';
+/** The framework ids that existed when the config was last saved. */
+const STORE_KNOWN = 'drawsvgbench:compare-known';
 
 const DEFAULT_CONFIG: RunConfig = {
 	counts: [1000, 5000, 20000],
@@ -76,7 +78,24 @@ const fmtCompact = (n: number) => (n >= 1000 ? `${n / 1000}k` : String(n));
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 const $ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector(sel) as T;
 
-let config: RunConfig = read(STORE_CONFIG, DEFAULT_CONFIG);
+/**
+ * The saved config, with frameworks added since it was saved selected: its
+ * `frameworks` list replaces the default one, so a new entry would otherwise
+ * start unticked and never run. Ids that no longer exist are dropped.
+ */
+function loadConfig(): RunConfig {
+	const saved = read(STORE_CONFIG, DEFAULT_CONFIG);
+	// Configs saved before STORE_KNOWN existed count as knowing only what they selected.
+	const known = read(STORE_KNOWN, { ids: saved.frameworks }).ids;
+	const ids = FRAMEWORKS.map((f) => f.id);
+	return { ...saved, frameworks: ids.filter((id) => saved.frameworks.includes(id) || !known.includes(id)) };
+}
+const saveConfig = () => {
+	write(STORE_CONFIG, config);
+	write(STORE_KNOWN, { ids: FRAMEWORKS.map((f) => f.id) });
+};
+
+let config: RunConfig = loadConfig();
 let lastRun: CompareRun | null = read<CompareRun | null>(STORE_RUN, null);
 let metric: Metric = 'total';
 
@@ -88,7 +107,7 @@ function renderCards() {
 		ripple: '<code>track(Float64Array)</code> · keyed <code>@for</code> over indices · <code>flushSync</code> around each write',
 		fable: '<code>Var&lt;float[]&gt;</code> · <code>Html.each</code> over indices · one binding per attribute, synchronous flush',
 		'fable-grouped':
-			'The same F# app, but each line has one effect that writes all five attributes, the shape the Solid and Ripple compilers emit',
+			'The same F# app, but each line has one effect that writes all six attributes, the shape the Solid and Ripple compilers emit',
 	};
 	$('#cards').innerHTML = FRAMEWORKS.map(
 		(f) => `
@@ -166,7 +185,7 @@ async function loadFramework(frame: HTMLIFrameElement, path: string): Promise<Be
 
 async function runComparison() {
 	config = readForm();
-	write(STORE_CONFIG, config);
+	saveConfig();
 
 	const overlay = $('#runner');
 	const frame = $<HTMLIFrameElement>('#runner-frame');
@@ -458,7 +477,7 @@ wireTooltip();
 
 $('#config').addEventListener('input', () => {
 	config = readForm();
-	write(STORE_CONFIG, config);
+	saveConfig();
 	updateEstimate();
 });
 $('#config').addEventListener('submit', (e) => {

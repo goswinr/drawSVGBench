@@ -1,5 +1,5 @@
 import { track } from 'ripple';
-import { dashArray, lineStroke, range, type LineStyle } from '../shared/lines';
+import { dashArray, lineStroke, lineWidth, range, type LineStyle } from '../shared/lines';
 import type { StageBridge } from './bridge';
 
 export function Stage({ bridge, initial }: { bridge: StageBridge; initial: LineStyle }) @{
@@ -9,6 +9,7 @@ export function Stage({ bridge, initial }: { bridge: StageBridge; initial: LineS
 	// One tracked value per style field, so a width change does not wake the per-line bindings.
 	const colorMode = track(initial.colorMode);
 	const color = track(initial.color);
+	const widthMode = track(initial.widthMode);
 	const width = track(initial.width);
 	const opacity = track(initial.opacity);
 	const linecap = track(initial.linecap);
@@ -25,6 +26,7 @@ export function Stage({ bridge, initial }: { bridge: StageBridge; initial: LineS
 	bridge.setStyle = (s) => {
 		colorMode.value = s.colorMode;
 		color.value = s.color;
+		widthMode.value = s.widthMode;
 		width.value = s.width;
 		opacity.value = s.opacity;
 		linecap.value = s.linecap;
@@ -49,6 +51,7 @@ export function Stage({ bridge, initial }: { bridge: StageBridge; initial: LineS
 					x2={data.value[o + 2]}
 					y2={data.value[o + 3]}
 					stroke={lineStroke(colorMode.value, data.value, i, count.value)}
+					stroke-width={lineWidth(widthMode.value, i)}
 				/>
 			}
 		</g>
