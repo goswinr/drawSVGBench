@@ -134,8 +134,9 @@ gap is the per-attribute binding style rather than the reactive core.
 
 ## Changes Fable.Ripple needed
 
-The published results use a fork of [Fable.Ripple](https://github.com/fable-hub/Fable.Ripple): four
-commits on top of `cafa35a` (the 1.0.0-beta.4 release). They are not upstream yet. Without them the
+The published results use a fork of [Fable.Ripple](https://github.com/fable-hub/Fable.Ripple), branch
+[`perfClear`](https://github.com/goswinr/Fable.Ripple/tree/perfClear): four commits on top of
+`cafa35a` (the 1.0.0-beta.4 release). They are not upstream yet. Without them the
 F# page still works, but clearing or shrinking the list is quadratic (below).
 
 | Commit    | Package          | Change                                                                                                                                                                                                  |
@@ -184,7 +185,8 @@ The remaining gap between the two Fable.Ripple entries is the per-attribute effe
 
 ### Building against NuGet or the fork
 
-If `./Fable.Ripple` exists (a clone of the fork, ignored by this repo's git), the F# page is built
+If `./Fable.Ripple` exists (a clone of the fork with `perfClear` checked out, ignored by this repo's
+git), the F# page is built
 against its `src/` instead of the NuGet packages, and the page shows `fork <branch>@<commit>` as its
 version. `npm run dev` then also recompiles on edits to the fork. To force the packages, set
 `FABLE_RIPPLE=nuget` (e.g. `$env:FABLE_RIPPLE='nuget'; npm run build` in PowerShell).

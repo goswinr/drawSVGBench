@@ -238,10 +238,14 @@ For the fork: clone it into `./Fable.Ripple` (gitignored) and check out `perfCle
 
 ## State when written (2026-09-24)
 
-- `github.com/goswinr/drawSVGBench` (public): `main` = `33aecf6`, pushed. Branch
-  `fable-grouped-entry` (`00f2e70`, the grouped entry) is local only.
-- Fork at `./Fable.Ripple`: branch `perfClear` = `ee78536`, `a2318ef`, `706f69d` on `cafa35a`,
-  not pushed. The plan is a PR to `fable-hub/Fable.Ripple`; not opened yet.
+- `github.com/goswinr/drawSVGBench` (public): `main` includes the grouped entry, per-line widths,
+  shorter lines and the publish-ready README. The demo is on GitHub Pages
+  (<https://goswinr.github.io/drawSVGBench/>), served from the `gh-pages` branch that
+  `npm run deploy` force-pushes.
+- Fork at `./Fable.Ripple`: branch `perfClear` = `ee78536`, `a2318ef`, `706f69d`, `7c30aac` on
+  `cafa35a`, pushed to `github.com/goswinr/Fable.Ripple`. `7c30aac` (clear internal arrays with
+  `length = 0`) was first on a branch named `unchecked`, since renamed. The plan is a PR to
+  `fable-hub/Fable.Ripple`; not opened yet.
 - The fork's `main` is `cafa35a`, the beta.4 release, including `ff5d387` "feat!: replace SRTP signal
   parameters with a Signal interface". 
 - `fable/App.fs` also uses `Signal.map`/`mapWith` and builds against the local fork branch.
