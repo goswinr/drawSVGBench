@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>drawSVGBench</title>
+		<meta name="description" content="Full-screen SVG line rendering benchmark: SolidJS vs Ripple-TS vs Fable.Ripple vs vanilla JS." />
+		<script type="module" crossorigin src="./assets/compare-B1kV4KBm.js"></script>
+		<link rel="modulepreload" crossorigin href="./assets/measure-BaOO9YUp.js">
+		<link rel="stylesheet" crossorigin href="./assets/compare-CZFRQUBu.css">
+	</head>
+	<body>
+		<main class="page">
+			<header class="intro">
+				<h1>drawSVGBench</h1>
+				<p>
+					A full-screen <code>&lt;svg&gt;</code> of <code>&lt;line&gt;</code> elements driven by one
+					<code>Float64Array</code>, where every 4 floats are a line
+					(<code>x1 y1 x2 y2</code>). Each framework page renders the same data with the same styling
+					options and is timed by the same harness code; only the rendering layer differs.
+				</p>
+				<p class="repo-link">
+					Source, results and notes:
+					<a href="https://github.com/goswinr/drawSVGBench">github.com/goswinr/drawSVGBench</a>
+				</p>
+			</header>
+
+			<nav id="cards" class="cards" aria-label="Framework pages"></nav>
+
+			<form id="config" class="config">
+				<h2>Run a comparison</h2>
+				<fieldset>
+					<legend>Line counts</legend>
+					<div id="counts" class="chips"></div>
+				</fieldset>
+				<fieldset>
+					<legend>Frameworks</legend>
+					<div id="fws" class="chips"></div>
+				</fieldset>
+				<div class="fields">
+					<label>Iterations <input type="number" name="iterations" min="1" max="500" /></label>
+					<label>Warmup <input type="number" name="warmup" min="0" max="100" /></label>
+					<label>Rounds <input type="number" name="rounds" min="1" max="10" title="Each round runs every framework; the order rotates per round" /></label>
+					<label
+						>Budget per cell (s)
+						<input type="number" name="budget" min="1" max="600" title="Wall-clock limit per operation and line count. Once spent, the op stops after 3 measured samples." />
+					</label>
+					<label
+						>Colour for create/update
+						<select name="colorMode">
+							<option value="uniform">Uniform (no per-line stroke)</option>
+							<option value="angle">Hue by angle (per-line stroke)</option>
+						</select>
+					</label>
+				</div>
+				<div class="run-row">
+					<button type="submit" id="run" class="primary">Run comparison</button>
+					<span id="estimate" class="muted"></span>
+				</div>
+				<details class="method">
+					<summary>How it is measured</summary>
+					<ul>
+						<li>
+							<b>Create</b>: empty SVG → N lines. <b>Update</b>: a new random array of the same size;
+							existing <code>&lt;line&gt;</code> attributes are rewritten in place. <b>Recolor</b>: the
+							per-line stroke switches between hue-by-angle and hue-by-index. <b>Clear</b>: N lines → none.
+						</li>
+						<li>
+							<b>Script</b> is the synchronous framework call (reactive graph + DOM mutation), timed with
+							<code>performance.now()</code>. Solid and Fable.Ripple flush synchronously; Ripple-TS is wrapped
+							in <code>flushSync</code>. The vanilla JS page writes the DOM directly.
+						</li>
+						<li>
+							<b>Render</b> is the browser's main-thread style, layout and paint for the next frame: from
+							the frame's <code>requestAnimationFrame</code> callback to the first task after it. Waiting
+							for vsync and off-thread rasterization are not counted.
+						</li>
+						<li>
+							New arrays are generated before the timer starts. Every sample starts from a settled frame.
+							After each op the DOM is checked: line count, exact coordinates, stroke and stroke width on a few lines.
+						</li>
+						<li>
+							Each operation and line count has a wall-clock budget. If a framework goes past it (setup
+							included), the rest of the warmup is skipped and measuring stops after 3 samples, or after 1
+							once three budgets are spent. Those cells are marked <span class="bad">*</span>.
+						</li>
+						<li>
+							Each framework runs in its own full-screen iframe, one after another. Run the production
+							build (<code>npm run bench</code>); dev builds include framework debug code.
+						</li>
+					</ul>
+				</details>
+			</form>
+
+			<section id="results" class="results" hidden aria-labelledby="results-title">
+				<div class="results-head">
+					<h2 id="results-title">Results</h2>
+					<div class="results-tools">
+						<fieldset id="metric" class="segmented">
+							<legend class="sr-only">Metric</legend>
+							<label><input type="radio" name="metric" value="total" checked /><span>Total</span></label>
+							<label><input type="radio" name="metric" value="script" /><span>Script</span></label>
+							<label><input type="radio" name="metric" value="render" /><span>Render</span></label>
+						</fieldset>
+						<button type="button" id="download">Download JSON</button>
+					</div>
+				</div>
+				<p id="run-meta" class="muted"></p>
+
+				<div id="summary" class="tiles"></div>
+				<p id="summary-note" class="muted note"></p>
+
+				<div class="legend" aria-hidden="true">
+					<span><i class="seg-key"></i>script</span>
+					<span><i class="seg-key seg-key-render"></i>render</span>
+					<span class="muted">Bars are median ms, scaled per chart; hover or focus a bar for details.</span>
+				</div>
+
+				<div id="charts"></div>
+
+				<details class="table-view" open>
+					<summary>Table view</summary>
+					<div id="table" class="table-wrap"></div>
+				</details>
+			</section>
+		</main>
+
+		<div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+
+		<div id="runner" class="runner" hidden>
+			<iframe id="runner-frame" title="Benchmark in progress"></iframe>
+			<div class="runner-hud">
+				<div id="runner-bar" class="runner-bar"><i></i></div>
+				<div class="runner-row">
+					<span id="runner-label">Starting…</span>
+					<span id="runner-eta" class="muted"></span>
+					<button type="button" id="runner-cancel">Cancel <kbd>Esc</kbd></button>
+				</div>
+			</div>
+		</div>
+
+	</body>
+</html>
