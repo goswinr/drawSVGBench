@@ -4,7 +4,7 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>drawSVGBench</title>
-		<meta name="description" content="Full-screen SVG line rendering benchmark: SolidJS vs Ripple vs Fable.Ripple." />
+		<meta name="description" content="Full-screen SVG line rendering benchmark: SolidJS vs Ripple vs Fable.Ripple vs vanilla JS." />
 	</head>
 	<body>
 		<main class="page">
@@ -65,7 +65,7 @@
 						<li>
 							<b>Script</b> is the synchronous framework call (reactive graph + DOM mutation), timed with
 							<code>performance.now()</code>. Solid and Fable.Ripple flush synchronously; Ripple is wrapped
-							in <code>flushSync</code>.
+							in <code>flushSync</code>. The vanilla JS page writes the DOM directly.
 						</li>
 						<li>
 							<b>Render</b> is the browser's main-thread style, layout and paint for the next frame: from

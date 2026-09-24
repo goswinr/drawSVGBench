@@ -1,4 +1,4 @@
-// The page chrome shared by all three framework pages: a full-screen stage the
+// The page chrome shared by all the framework pages: a full-screen stage the
 // framework renders its <svg> into, a floating control panel, and the
 // `window.__bench` handle the compare page drives. Plain DOM on purpose, so
 // the panel costs every framework the same.

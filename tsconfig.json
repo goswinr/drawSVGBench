@@ -13,5 +13,5 @@
 		"jsxImportSource": "solid-js",
 		"types": ["vite/client"]
 	},
-	"include": ["shared", "solid", "ripple/*.ts", "compare"]
+	"include": ["shared", "solid", "ripple/*.ts", "vanilla", "compare"]
 }

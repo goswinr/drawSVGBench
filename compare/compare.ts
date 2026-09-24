@@ -108,6 +108,7 @@ function renderCards() {
 		fable: '<code>Var&lt;float[]&gt;</code> · <code>Html.each</code> over indices · one binding per attribute, synchronous flush',
 		'fable-grouped':
 			'The same F# app, but each line has one effect that writes all six attributes, the shape the Solid and Ripple compilers emit',
+		vanilla: 'The baseline: an array of <code>&lt;line&gt;</code> elements written with <code>setAttribute</code>, only where a value changed',
 	};
 	$('#cards').innerHTML = FRAMEWORKS.map(
 		(f) => `

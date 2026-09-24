@@ -80,6 +80,7 @@ export default defineConfig({
 				ripple: resolve(root, 'ripple/index.html'),
 				fable: resolve(root, 'fable/index.html'),
 				fableGrouped: resolve(root, 'fable-grouped/index.html'),
+				vanilla: resolve(root, 'vanilla/index.html'),
 			},
 		},
 	},

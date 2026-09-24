@@ -14,6 +14,7 @@
 	--fw-ripple: #eb6834;
 	--fw-fable: #1baf7a;
 	--fw-fable-grouped: #eda100;
+	--fw-vanilla: #e87ba4;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -33,6 +34,7 @@
 		--fw-ripple: #d95926;
 		--fw-fable: #199e70;
 		--fw-fable-grouped: #c98500;
+		--fw-vanilla: #d55181;
 	}
 }
 
@@ -52,6 +54,7 @@
 	--fw-ripple: #d95926;
 	--fw-fable: #199e70;
 	--fw-fable-grouped: #c98500;
+	--fw-vanilla: #d55181;
 }
 
 * {
@@ -149,6 +152,9 @@ h2 {
 }
 [data-fw='fable-grouped'] {
 	--fw: var(--fw-fable-grouped);
+}
+[data-fw='vanilla'] {
+	--fw: var(--fw-vanilla);
 }
 
 .swatch {

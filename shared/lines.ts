@@ -5,8 +5,11 @@
 // Core data structure: a flat Float64Array. Every 4 floats are one line:
 //   [x1, y1, x2, y2, x1, y1, x2, y2, ...]   (pixel coordinates)
 
-/** `fable-grouped` is the Fable.Ripple app with one effect per line instead of one per attribute. */
-export type FrameworkId = 'solid' | 'ripple' | 'fable' | 'fable-grouped';
+/**
+ * `fable-grouped` is the Fable.Ripple app with one effect per line instead of one per attribute.
+ * `vanilla` is no framework: plain DOM calls, the baseline.
+ */
+export type FrameworkId = 'solid' | 'ripple' | 'fable' | 'fable-grouped' | 'vanilla';
 
 export type ColorMode = 'uniform' | 'angle' | 'length' | 'index';
 export type WidthMode = 'uniform' | 'varied';

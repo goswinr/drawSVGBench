@@ -1,6 +1,7 @@
 # drawSVGBench
 
-A full-screen SVG line-drawing benchmark for **SolidJS**, **Ripple** (ripple-ts) and **Fable.Ripple** (F#).
+A full-screen SVG line-drawing benchmark for **SolidJS**, **Ripple** (ripple-ts) and **Fable.Ripple** (F#),
+with a **vanilla JS** page (plain DOM calls, no framework) as the baseline.
 
 **Live demo: <https://goswinr.github.io/drawSVGBench/>** (see [Live demo](#live-demo) for its limits)
 
@@ -42,6 +43,8 @@ up over earlier runs (headless Chrome, 1,000 to 100,000 lines):
 
 The screenshot above is the compare page from a separate run at 2,000 and 20,000 lines.
 
+The vanilla JS baseline was added after these runs and is not in the table or the screenshot yet.
+
 ## Quick start
 
 Requires Node 20.19+ and the .NET 10 SDK (for the Fable compiler).
@@ -66,6 +69,7 @@ Pages:
 - `/solid/`, `/ripple/`, `/fable/`: each framework on its own, full-screen, with a control panel.
 - `/fable-grouped/`: the Fable.Ripple app again, with one effect per line instead of one per
   attribute (see below).
+- `/vanilla/`: no framework, the baseline (see below).
 
 Keys on the framework pages: <kbd>Space</kbd> new array · <kbd>A</kbd> animate · <kbd>C</kbd> clear ·
 <kbd>H</kbd> hide the panel. Add `?lines=20000` to the URL to start with a given count.
@@ -90,7 +94,7 @@ across updates: it costs work on create, but an update does not rewrite it.
 
 - **Script**: the synchronous framework call (reactive graph + DOM mutation), timed with
   `performance.now()`. Solid 1.x and Fable.Ripple flush writes synchronously; Ripple calls are wrapped
-  in `flushSync`.
+  in `flushSync`. The vanilla page writes the DOM directly.
 - **Render**: the browser's main-thread style, layout and paint for the frame that shows the change.
   It is measured from that frame's `requestAnimationFrame` callback to the first task after it. Waiting
   for vsync and off-thread rasterization are excluded.
@@ -109,7 +113,7 @@ Fable.Ripple's hot-reload bookkeeping.
 
 ## How each framework renders
 
-All three keep the whole array in **one** reactive source and render a list over `range(count)`,
+All three frameworks keep the whole array in **one** reactive source and render a list over `range(count)`,
 where `count` is derived from `data.length / 4`. The index list is only rebuilt when the count
 changes. Each `<line>` binds its 4 coordinates plus the optional per-line stroke and stroke-width
 to the source.
@@ -123,6 +127,14 @@ to the source.
 
 The style fields are separate signals/tracked values/Vars in all three, so changing the width does
 not wake the per-line bindings.
+
+**The vanilla JS baseline** ([vanilla/main.ts](vanilla/main.ts)) has no reactive graph. It keeps an
+array of `<line>` elements and writes them with `setAttribute`, doing what the compiled Solid and Ripple
+code does and nothing more. An update rewrites the coordinates and only the strokes that changed.
+Lines are added at the end, built before they are attached and inserted with one `append`; extra lines
+are removed from the end, and a clear is one `textContent = ""`. A style change writes only the `<g>`
+attributes that changed, and touches every line only when the colour or width mode changes. The
+distance between a framework and this page is what the framework costs.
 
 **Why two Fable.Ripple entries.** Solid's and Ripple's compilers turn an element's dynamic
 attributes into one effect that re-evaluates them together and writes only the ones that changed.
@@ -203,12 +215,13 @@ milliseconds; for small counts, or numbers to quote, run `npm run bench` locally
 ```
 shared/lines.ts      data model: generator, drift, per-line stroke, dash patterns, BenchApp contract
 shared/measure.ts    timing, stats, DOM verification, the suite runner
-shared/harness.ts    full-screen stage + control panel + window.__bench (used by all three pages)
+shared/harness.ts    full-screen stage + control panel + window.__bench (used by every page)
 shared/frameworks.ts names and versions (versions injected by vite.config.ts)
 solid/               SolidJS page
 ripple/              Ripple page (Stage.tsrx + a bridge so the harness can write tracked state)
 fable/               Fable.Ripple page (App.fs; Interop.fs binds the shared TS harness)
 fable-grouped/       the same app with one effect per line (only an index.html)
+vanilla/             vanilla JS page (no framework), the baseline
 Fable.Ripple/        optional local clone of Fable.Ripple, used instead of NuGet when present
 compare/ + index.html  compare page
 scripts/deploy.mjs   pushes dist/ to the gh-pages branch

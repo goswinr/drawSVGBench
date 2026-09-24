@@ -2,7 +2,7 @@
   "name": "draw-svg-bench",
   "private": true,
   "version": "0.1.0",
-  "description": "Full-screen SVG line rendering benchmark: SolidJS vs Ripple vs Fable.Ripple",
+  "description": "Full-screen SVG line rendering benchmark: SolidJS vs Ripple vs Fable.Ripple vs vanilla JS",
   "type": "module",
   "scripts": {
     "postinstall": "dotnet tool restore",
