@@ -229,8 +229,21 @@ body {
 	font-weight: 600;
 }
 
-.hb-nav .hb-compare {
-	border-style: dashed;
+.hb-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 14px;
+	margin: 6px 0 0;
+	font-size: 12px;
+}
+
+.hb-links a {
+	color: var(--hb-accent);
+	text-decoration: none;
+}
+
+.hb-links a:hover {
+	text-decoration: underline;
 }
 
 .hb-panel section {

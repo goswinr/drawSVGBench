@@ -20,6 +20,7 @@ import {
 } from './measure';
 
 const STORE_KEY = 'drawsvgbench:settings';
+const REPO_URL = 'https://github.com/goswinr/drawSVGBench';
 
 type DataMode = 'random' | 'drift';
 
@@ -433,7 +434,8 @@ function panelHtml(current: BenchApp['id']): string {
 		</button>
 	</header>
 	<div class="hb-body">
-		<nav class="hb-nav" aria-label="Frameworks">${nav}<a href="../" class="hb-compare">Compare all →</a></nav>
+		<nav class="hb-nav" aria-label="Frameworks">${nav}</nav>
+		<p class="hb-links"><a href="../">← Main page: compare all</a><a href="${REPO_URL}">Source on GitHub</a></p>
 
 		<section>
 			<h2>Data</h2>
