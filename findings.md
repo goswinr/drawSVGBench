@@ -7,7 +7,7 @@ anywhere else.
 
 ## Verdicts
 
-1. **Create, update, recolor: no winner.** SolidJS 1.9.15, Ripple 0.4.2 and Fable.Ripple are within
+1. **Create, update, recolor: no winner.** SolidJS 1.9.15, Ripple-TS 0.4.2 and Fable.Ripple are within
    about ±20% of each other from 1k to 100k lines. The ranking changes from run to run.
 2. **Recolor is the browser's cost, not the framework's.** Render (style recalc for per-line
    `stroke`) is 74–80% of recolor time at 10k and more lines, for all frameworks.
@@ -19,9 +19,9 @@ anywhere else.
    branch `perfClear` (3 commits, below).
 4. **After the fix, idiomatic Fable.Ripple is still ~1.5–2× slower on clear and ~1.3–1.5× on create
    at 50k–100k.** The cause is the binding style, not the reactive core: `svgAttr.custom` makes one
-   effect per attribute, so 5 reactive nodes per `<line>`. Solid's and Ripple's compilers emit 1.
+   effect per attribute, so 5 reactive nodes per `<line>`. Solid's and Ripple-TS's compilers emit 1.
 5. **Fable.Ripple with one hand-written effect per line matches Solid and Ripple.** In the four-way
-   run the geometric means are: grouped 1.08×, Ripple 1.07×, Solid 1.14×, idiomatic Fable.Ripple
+   run the geometric means are: grouped 1.08×, Ripple-TS 1.07×, Solid 1.14×, idiomatic Fable.Ripple
    1.27×.
 6. **Fable.Ripple is competitive on update.** At 50k both Fable pages were at or near the fastest
    (see the tables). That is within noise of the others, so don't claim a win without more rounds.
@@ -31,7 +31,7 @@ anywhere else.
 | Item | Value |
 | --- | --- |
 | SolidJS | 1.9.15, vite-plugin-solid 2.11.14 |
-| Ripple | 0.4.2 (0.4.7 was latest, but see the npm release-age note), @ripple-ts/vite-plugin 0.4.2 |
+| Ripple-TS | 0.4.2 (0.4.7 was latest, but see the npm release-age note), @ripple-ts/vite-plugin 0.4.2 |
 | Fable.Ripple | NuGet 1.0.0-beta.3, Dom 1.0.0-beta.2 (pinned in `fable/App.fsproj`), or the fork in `./Fable.Ripple` (preferred when present). beta.4 / Dom beta.3 is out but not benchmarked (see State). |
 | Fable compiler | 5.17.2, Release build (`-c Release`) |
 | Vite / TypeScript | 8.3.0 / 5.9.3 |
@@ -40,7 +40,7 @@ anywhere else.
 ## What the numbers mean
 
 - **Script**: the synchronous `setData`/`setStyle` call (reactive graph + DOM mutation), timed with
-  `performance.now()`. Solid 1.x and Fable.Ripple flush synchronously. Ripple is wrapped in `flushSync`.
+  `performance.now()`. Solid 1.x and Fable.Ripple flush synchronously. Ripple-TS is wrapped in `flushSync`.
 - **Render**: main-thread style, layout and paint for the next frame, from that frame's rAF callback to
   the first task after it (`afterNextPaint` in `shared/measure.ts`). Excludes vsync wait and raster.
 - New arrays are generated before the timer starts, and every sample starts from a settled frame.
@@ -60,7 +60,7 @@ anywhere else.
 
 5 runs + 2 warmup, uniform colour, fork at `706f69d`.
 
-| Op | Lines | Solid | Ripple | Fable.Ripple | Fable.Ripple (grouped) |
+| Op | Lines | Solid | Ripple-TS | Fable.Ripple | Fable.Ripple (grouped) |
 | --- | --- | --- | --- | --- | --- |
 | Create | 10k | 41.0 | 39.5 | 48.5 | **37.2** |
 | Create | 50k | 234 | **225** | 235 | 281 |
@@ -77,7 +77,7 @@ anywhere else.
 5 runs + 2 warmup, uniform colour. The grouped build was the one-effect-per-line experiment, now
 `lineGrouped` in `fable/App.fs`.
 
-| Op | Lines | Solid | Ripple | Fable.Ripple (5 effects/line) | Fable.Ripple (1 effect/line) |
+| Op | Lines | Solid | Ripple-TS | Fable.Ripple (5 effects/line) | Fable.Ripple (1 effect/line) |
 | --- | --- | --- | --- | --- | --- |
 | Create | 50k | 147.0 | 200.7 | 211.7 | 155.0 |
 | Create | 100k | 325.0 | 407.2 | 482.7 | 341.6 |
@@ -86,12 +86,12 @@ anywhere else.
 | Clear | 50k | 17.4 | 16.0 | 37.4 | 15.9 |
 | Clear | 100k | 28.8 | 35.5 | 48.9 | 30.8 |
 
-Recolor from separate runs, script ms at 50k / 100k: Solid 32.3 / 83.0, Ripple 27.4 / 63.1, Fable.Ripple
+Recolor from separate runs, script ms at 50k / 100k: Solid 32.3 / 83.0, Ripple-TS 27.4 / 63.1, Fable.Ripple
 (fork, 5 effects) 18.2 / 43.8. Render adds 68–184 ms on top for all three.
 
 ### Clear across Fable.Ripple versions: script ms
 
-| Lines | NuGet beta.3 | Fork `ee78536` | Fork `706f69d` (all 3) | Grouped page | Solid | Ripple |
+| Lines | NuGet beta.3 | Fork `ee78536` | Fork `706f69d` (all 3) | Grouped page | Solid | Ripple-TS |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1,000 | 11.7 | 0.9 | 0.5 | | | |
 | 10,000 | 1,666 | 7.6 | 5.0–5.7 | 3.5 | 2.8–3.4 | 2.5–2.9 |
@@ -118,7 +118,7 @@ noise. The harness's double rAF puts a ~30 ms floor under each op.
   9.4 ms, `compactObservers` 6.1 ms.
 - Fable.Ripple after `706f69d`: the single `textContent = ""` 11.4 ms, `compactObservers` 4.8 ms,
   `item` 4.7 ms.
-- Solid: `cleanChildren` 9.5 ms, `cleanNode` 4.8 ms. Ripple: `reconcile_fast_clear` 9.2 ms.
+- Solid: `cleanChildren` 9.5 ms, `cleanNode` 4.8 ms. Ripple-TS: `reconcile_fast_clear` 9.2 ms.
 
 The DOM removal itself costs about the same in all three. What remains in Fable.Ripple is per-node
 graph work, ×5 because of the per-attribute effects.
@@ -175,7 +175,7 @@ one signal (5 × N observer entries here), that is N passes over a list of up to
 - Signal writes are synchronous. The benchmark uses `createSignal(arr, { equals: false })`.
 - `vite-plugin-solid` is limited to `solid/**/*.tsx` so it doesn't transform the other pages.
 
-**Ripple 0.4.2**
+**Ripple-TS 0.4.2**
 - Components are `.tsrx` files with `@{ … }` bodies and `@for (… ; key i)`.
 - Writes are batched, so wrap them in `flushSync` for synchronous timing. Mount with
   `mount(C, { target, props, rootBoundary: false })`.
@@ -200,7 +200,7 @@ one signal (5 × N observer entries here), that is N passes over a list of up to
 ## Environment gotchas (this machine)
 
 - npm enforces a ~7-day minimum release age, so the newest installable versions are about a week
-  old. Ripple is pinned to 0.4.2 for that reason.
+  old. Ripple-TS is pinned to 0.4.2 for that reason.
 - No Python. Script with Node or PowerShell.
 - `core.autocrlf` prints LF→CRLF warnings on commit. They are harmless.
 - The fork has its own repo-local git identity, different from this repo's.

@@ -1,6 +1,6 @@
 # drawSVGBench
 
-A full-screen SVG line-drawing benchmark for **SolidJS**, **Ripple** (ripple-ts) and **Fable.Ripple** (F#),
+A full-screen SVG line-drawing benchmark for **SolidJS**, **Ripple-TS** and **Fable.Ripple** (F#),
 with a **vanilla JS** page (plain DOM calls, no framework) as the baseline.
 
 **Live demo: <https://goswinr.github.io/drawSVGBench/>** (see [Live demo](#live-demo) for its limits)
@@ -19,13 +19,13 @@ One run of the compare page, 5,000 lines, 20 measured runs + 5 warmup per cell, 
 varied widths. Microsoft Edge 152, Windows 11, 20 cores, viewport 3832×1994 at 1×, production
 build, 2026-09-24. Median total ms (script + render), with the ratio to the fastest in each row:
 
-| Op                 | SolidJS 1.9.15 | Ripple 0.4.2   | Fable.Ripple   | Fable.Ripple (grouped) |
-| ------------------ | -------------- | -------------- | -------------- | ---------------------- |
-| Create             | **15.9**       | 19.2 (1.21×)   | 20.0 (1.26×)   | 16.1 (1.01×)           |
-| Update             | 15.1 (1.11×)   | 16.9 (1.24×)   | 15.6 (1.14×)   | **13.6**               |
-| Recolor            | 5.15 (1.23×)   | 4.64 (1.11×)   | **4.20**       | 4.28 (1.02×)           |
-| Clear              | 2.64 (1.12×)   | **2.37**       | 3.56 (1.51×)   | 2.54 (1.08×)           |
-| Geomean vs fastest | 1.11×          | 1.13×          | 1.21×          | 1.03×                  |
+| Op                 | SolidJS 1.9.15 | Ripple-TS 0.4.2 | Fable.Ripple   | Fable.Ripple (grouped) |
+| ------------------ | -------------- | --------------- | -------------- | ---------------------- |
+| Create             | **15.9**       | 19.2 (1.21×)    | 20.0 (1.26×)   | 16.1 (1.01×)           |
+| Update             | 15.1 (1.11×)   | 16.9 (1.24×)    | 15.6 (1.14×)   | **13.6**               |
+| Recolor            | 5.15 (1.23×)   | 4.64 (1.11×)    | **4.20**       | 4.28 (1.02×)           |
+| Clear              | 2.64 (1.12×)   | **2.37**        | 3.56 (1.51×)   | 2.54 (1.08×)           |
+| Geomean vs fastest | 1.11×          | 1.13×           | 1.21×          | 1.03×                  |
 
 Both Fable.Ripple entries are built with Fable 5.17.2 against a fork with the changes described in
 [Changes Fable.Ripple needed](#changes-fableripple-needed). Render time is about the same for all four
@@ -37,7 +37,7 @@ up over earlier runs (headless Chrome, 1,000 to 100,000 lines):
 
 - Create, update and recolor have no consistent winner.
 - Idiomatic Fable.Ripple is the slowest at clear and create, because it runs 6 effects per line where
-  Solid's and Ripple's compilers emit 1. With one hand-written effect per line (the grouped entry) it
+  Solid's and Ripple-TS's compilers emit 1. With one hand-written effect per line (the grouped entry) it
   matches Solid and Ripple.
 - Recolor is mostly the browser's style recalculation, not framework work.
 
@@ -95,7 +95,7 @@ across updates: it costs work on create, but an update does not rewrite it.
 | Clear   | N lines → empty SVG                                                     |
 
 - **Script**: the synchronous framework call (reactive graph + DOM mutation), timed with
-  `performance.now()`. Solid 1.x and Fable.Ripple flush writes synchronously; Ripple calls are wrapped
+  `performance.now()`. Solid 1.x and Fable.Ripple flush writes synchronously; Ripple-TS calls are wrapped
   in `flushSync`. The vanilla page writes the DOM directly.
 - **Render**: the browser's main-thread style, layout and paint for the frame that shows the change.
   It is measured from that frame's `requestAnimationFrame` callback to the first task after it. Waiting
@@ -123,7 +123,7 @@ to the source.
 | Framework                    | Source                                           | List                     | Per-line bindings                                                 |
 | ---------------------------- | ------------------------------------------------ | ------------------------ | ----------------------------------------------------------------- |
 | SolidJS ([solid/main.tsx](solid/main.tsx))    | `createSignal(Float64Array, { equals: false })`  | `<For>`                  | one render effect per line (the compiler groups the attributes)   |
-| Ripple ([ripple/Stage.tsrx](ripple/Stage.tsrx)) | `track(Float64Array)`                            | keyed `@for`             | one render block per line (the compiler groups the attributes)    |
+| Ripple-TS ([ripple/Stage.tsrx](ripple/Stage.tsrx)) | `track(Float64Array)`                            | keyed `@for`             | one render block per line (the compiler groups the attributes)    |
 | Fable.Ripple ([fable/App.fs](fable/App.fs))  | `Var.createWith Signal.referenceEquals float[]`  | `Html.each`              | one `svgAttr.custom` effect per attribute (6 per line)            |
 | Fable.Ripple (grouped), same file              | same                                             | same                     | one effect per line that writes all 6 attributes (`lineGrouped`)  |
 
@@ -131,14 +131,14 @@ The style fields are separate signals/tracked values/Vars in all three, so chang
 not wake the per-line bindings.
 
 **The vanilla JS baseline** ([vanilla/main.ts](vanilla/main.ts)) has no reactive graph. It keeps an
-array of `<line>` elements and writes them with `setAttribute`, doing what the compiled Solid and Ripple
+array of `<line>` elements and writes them with `setAttribute`, doing what the compiled Solid and Ripple-TS
 code does and nothing more. An update rewrites the coordinates and only the strokes that changed.
 Lines are added at the end, built before they are attached and inserted with one `append`; extra lines
 are removed from the end, and a clear is one `textContent = ""`. A style change writes only the `<g>`
 attributes that changed, and touches every line only when the colour or width mode changes. The
 distance between a framework and this page is what the framework costs.
 
-**Why two Fable.Ripple entries.** Solid's and Ripple's compilers turn an element's dynamic
+**Why two Fable.Ripple entries.** Solid's and Ripple-TS's compilers turn an element's dynamic
 attributes into one effect that re-evaluates them together and writes only the ones that changed.
 Fable.Ripple.Dom has no compiler: each `svgAttr.custom` binding is its own effect, so the idiomatic
 page creates, marks and tears down 6 reactive nodes per line where the others have 1. The grouped
@@ -178,7 +178,7 @@ not change the code involved.
 
 Clear, script time, headless Chrome 154, measured before `7c30aac`:
 
-| Lines   | NuGet beta.3 | Fork, 1st commit | Fork, all 3 commits | Fork, grouped page | Solid | Ripple |
+| Lines   | NuGet beta.3 | Fork, 1st commit | Fork, all 3 commits | Fork, grouped page | Solid | Ripple-TS |
 | ------- | ------------ | ---------------- | ------------------- | ------------------ | ----- | ------ |
 | 1,000   | 11.7 ms      | 0.9 ms           | 0.5 ms              |                    |       |        |
 | 10,000  | 1,666 ms     | 7.6 ms           | 5.0–5.7 ms          | 3.5 ms             | 2.8–3.4 ms | 2.5–2.9 ms |
@@ -220,7 +220,7 @@ shared/measure.ts    timing, stats, DOM verification, the suite runner
 shared/harness.ts    full-screen stage + control panel + window.__bench (used by every page)
 shared/frameworks.ts names and versions (versions injected by vite.config.ts)
 solid/               SolidJS page
-ripple/              Ripple page (Stage.tsrx + a bridge so the harness can write tracked state)
+ripple/              Ripple-TS page (Stage.tsrx + a bridge so the harness can write tracked state)
 fable/               Fable.Ripple page (App.fs; Interop.fs binds the shared TS harness)
 fable-grouped/       the same app with one effect per line (only an index.html)
 vanilla/             vanilla JS page (no framework), the baseline
