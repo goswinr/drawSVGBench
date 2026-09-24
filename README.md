@@ -5,7 +5,7 @@ with a **vanilla JS** page (plain DOM calls, no framework) as the baseline.
 
 **Live demo: <https://goswinr.github.io/drawSVGBench/>** (see [Live demo](#live-demo) for its limits)
 
-![The compare page: bar charts of create, update, recolor and clear times for the four entries at 2,000 and 20,000 lines](docs/compare.png)
+![The compare page: bar charts of create, update, recolor and clear times for the five entries at 2,000 lines](docs/compare.png)
 
 The core data structure is one `Float64Array` of random floats; every 4 floats are one line
 (`x1 y1 x2 y2`, in pixels), at most 10% of the viewport width long. Each framework renders
@@ -41,9 +41,9 @@ up over earlier runs (headless Chrome, 1,000 to 100,000 lines):
   matches Solid and Ripple.
 - Recolor is mostly the browser's style recalculation, not framework work.
 
-The screenshot above is the compare page from a separate run at 2,000 and 20,000 lines.
-
-The vanilla JS baseline was added after these runs and is not in the table or the screenshot yet.
+The screenshot above is the compare page from a separate run at 2,000 lines, with the vanilla JS
+baseline. It was fastest in all four ops, 1.1–1.8× ahead of the others. The baseline was added after
+the run in the table, so it is not in the table yet.
 
 ## Quick start
 
