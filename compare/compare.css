@@ -118,6 +118,16 @@ h2 {
 	color: var(--text-2);
 }
 
+.intro .repo-link {
+	margin-top: 8px;
+}
+
+.repo-link a {
+	color: var(--accent);
+	font-weight: 500;
+	overflow-wrap: anywhere;
+}
+
 .swatch {
 	display: inline-block;
 	width: 10px;
