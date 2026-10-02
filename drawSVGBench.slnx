@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Fable.Ripple/" />
+  <Folder Name="/Fable.Ripple/src/">
+    <Project Path="Fable.Ripple/src/Fable.Ripple.Dom/Fable.Ripple.Dom.fsproj" />
+    <Project Path="Fable.Ripple/src/Fable.Ripple/Fable.Ripple.fsproj" />
+  </Folder>
+  <Folder Name="/fable/">
+    <Project Path="fable/App.fsproj" />
+  </Folder>
+</Solution>
