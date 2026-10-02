@@ -13,7 +13,16 @@ The core data structure is one `Float64Array` of random floats; every 4 floats a
 one to update the DOM. Every page uses the same data generator, the same style helpers and the same
 timing code. Only the rendering layer differs.
 
-## Results
+## Current build
+
+The live demo was rebuilt on **2026-10-02** with **Fable 5.18.0** and the local Fable.Ripple
+checkout on [`main@83e4925`](https://github.com/fable-hub/Fable.Ripple/commit/83e4925).
+This is the source for **Fable.Ripple 1.0.0-beta.6** / **Fable.Ripple.Dom 1.0.0-beta.7**, also
+pinned as the NuGet fallback in [fable/App.fsproj](fable/App.fsproj).
+The list-clear fixes are now upstream; later releases also skip unchanged DOM binding writes and
+reduce reactive bookkeeping. SolidJS remains at 1.9.15 and Ripple-TS at 0.4.2.
+
+## Results (2026-09-24 build)
 
 One run of the compare page, 5,000 lines, 20 measured runs + 5 warmup per cell, uniform colour and
 varied widths. Microsoft Edge 152, Windows 11, 20 cores, viewport 3832×1994 at 1×, production
@@ -27,17 +36,18 @@ build, 2026-09-24. Median total ms (script + render), with the ratio to the fast
 | Clear              | 2.64 (1.12×)   | **2.37**        | 3.56 (1.51×)   | 2.54 (1.08×)           |
 | Geomean vs fastest | 1.11×          | 1.13×           | 1.21×          | 1.03×                  |
 
-Both Fable.Ripple entries are built with Fable 5.17.2 against a fork with the changes described in
-[Changes Fable.Ripple needed](#changes-fableripple-needed). Render time is about the same for all four
-(1.9–2.0 ms on create, 2.6–2.7 ms on update, 2.5–2.6 ms on recolor, 0.5 ms on clear), so the
-differences come from script time. Every run passed the DOM check.
+These historical measurements use Fable 5.17.2 against the `perfClear` fork with the changes described in
+[Changes Fable.Ripple needed](#changes-fableripple-needed). They have not been re-measured for the
+current build. Render time was about the same for all four (1.9–2.0 ms on create, 2.6–2.7 ms on
+update, 2.5–2.6 ms on recolor, 0.5 ms on clear), so the differences came from script time.
+Every run passed the DOM check.
 
 Run-to-run noise is 10–30% at this size, so treat differences under about 20% as ties. What has held
 up over earlier runs (headless Chrome, 1,000 to 100,000 lines):
 
 - Create, update and recolor have no consistent winner.
-- Idiomatic Fable.Ripple is the slowest at clear and create, because it runs 6 effects per line where
-  Solid's and Ripple-TS's compilers emit 1. With one hand-written effect per line (the grouped entry) it
+- In those builds, idiomatic Fable.Ripple was the slowest at clear and create, because it runs 6
+  effects per line where Solid's and Ripple-TS's compilers emit 1. With one hand-written effect per line (the grouped entry) it
   matches Solid and Ripple.
 - Recolor is mostly the browser's style recalculation, not framework work.
 
@@ -47,7 +57,8 @@ the run in the table, so it is not in the table yet.
 
 ## Quick start
 
-Requires Node 20.19+ and the .NET 10 SDK (for the Fable compiler).
+Requires Node 20.19+ and the .NET 10 SDK (for the Fable compiler). The local tool manifest pins
+Fable 5.18.0.
 
 ```sh
 npm install          # also runs `dotnet tool restore` for Fable
@@ -62,6 +73,9 @@ npm run bench        # Fable release build + Vite production build, then opens t
 | `npm run bench`     | `build` + `preview --open`                                              |
 | `npm run typecheck` | `tsc --noEmit` over the TypeScript sources                              |
 | `npm run deploy`    | `build`, then force-pushes `dist/` to the `gh-pages` branch             |
+
+The Fable build and watch commands exclude `Fable.Ripple.Plugin` from JavaScript compilation:
+it is a .NET compiler plugin, not browser code.
 
 Pages:
 
@@ -140,7 +154,7 @@ distance between a framework and this page is what the framework costs.
 
 **Why two Fable.Ripple entries.** Solid's and Ripple-TS's compilers turn an element's dynamic
 attributes into one effect that re-evaluates them together and writes only the ones that changed.
-Fable.Ripple.Dom has no compiler: each `svgAttr.custom` binding is its own effect, so the idiomatic
+Fable.Ripple.Dom keeps these bindings separate: each `svgAttr.custom` binding is its own effect, so the idiomatic
 page creates, marks and tears down 6 reactive nodes per line where the others have 1. The grouped
 page (`fable-grouped/index.html` loads the same `App.fs.js` with `data-variant="grouped"`) writes that
 one effect by hand, with the public `Apply` + `Signal.effect` primitives. It shows how much of any
@@ -148,10 +162,12 @@ gap is the per-attribute binding style rather than the reactive core.
 
 ## Changes Fable.Ripple needed
 
-The published results use a fork of [Fable.Ripple](https://github.com/fable-hub/Fable.Ripple), branch
+The historical results above used a fork of [Fable.Ripple](https://github.com/fable-hub/Fable.Ripple), branch
 [`perfClear`](https://github.com/goswinr/Fable.Ripple/tree/perfClear): four commits on top of
-`cafa35a` (the 1.0.0-beta.4 release). They are not upstream yet. Without them the
-F# page still works, but clearing or shrinking the list is quadratic (below).
+`cafa35a` (the 1.0.0-beta.4 release). The fixes were merged upstream in
+[`ebc7db9` (#7)](https://github.com/fable-hub/Fable.Ripple/commit/ebc7db9), and released in
+Fable.Ripple / Dom 1.0.0-beta.5. The current build includes them; the table below records the
+original fork commits.
 
 | Commit    | Package          | Change                                                                                                                                                                                                  |
 | --------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -162,7 +178,7 @@ F# page still works, but clearing or shrinking the list is quadratic (below).
 
 The first three come with tests in the fork's suites.
 
-The app itself needed no library changes, only three choices in [fable/App.fs](fable/App.fs):
+The app uses three choices in [fable/App.fs](fable/App.fs):
 
 - `Var.createWith Signal.referenceEquals` for the data. `Var.create` compares with structural
   equality, which would walk the whole array on every write.
@@ -170,9 +186,9 @@ The app itself needed no library changes, only three choices in [fable/App.fs](f
   attribute and the per-line `stroke` and `stroke-width` must be removed in uniform mode.
 - `lineGrouped` for the grouped entry: the same public primitives, one effect for all six attributes.
 
-### Why: clear was O(n²) in the published packages
+### Why: clear was O(n²) in the older packages
 
-With the published Fable.Ripple `1.0.0-beta.3` / Dom `1.0.0-beta.2`, removing rows from `Html.each`
+With the older Fable.Ripple `1.0.0-beta.3` / Dom `1.0.0-beta.2`, removing rows from `Html.each`
 gets quadratically slower when every row observes the same source, as here. The beta.4 release does
 not change the code involved.
 
@@ -197,18 +213,19 @@ update and recolor were not affected.
 
 The remaining gap between the two Fable.Ripple entries is the per-attribute effects described above.
 
-### Building against NuGet or the fork
+### Building against NuGet or a local checkout
 
-If `./Fable.Ripple` exists (a clone of the fork with `perfClear` checked out, ignored by this repo's
-git), the F# page is built
+If `./Fable.Ripple` exists (a local clone, ignored by this repo's git), the F# page is built
 against its `src/` instead of the NuGet packages, and the page shows `fork <branch>@<commit>` as its
-version. `npm run dev` then also recompiles on edits to the fork. To force the packages, set
+version. The current checkout is `main@83e4925`; `perfClear` is only needed to reproduce the
+historical results. `npm run dev` also recompiles on edits to the checkout. To force the packages, set
 `FABLE_RIPPLE=nuget` (e.g. `$env:FABLE_RIPPLE='nuget'; npm run build` in PowerShell).
 
 ## Live demo
 
-<https://goswinr.github.io/drawSVGBench/> is the production build with the fork, published with
-`npm run deploy`. GitHub Pages cannot send the COOP/COEP headers, so `performance.now()` is rounded
+<https://goswinr.github.io/drawSVGBench/> is the production build described in
+[Current build](#current-build), published with `npm run deploy`. GitHub Pages cannot send the
+COOP/COEP headers, so `performance.now()` is rounded
 to 100 µs there instead of 5 µs. That is fine at thousands of lines, where each op takes
 milliseconds; for small counts, or numbers to quote, run `npm run bench` locally.
 
@@ -224,7 +241,7 @@ ripple/              Ripple-TS page (Stage.tsrx + a bridge so the harness can wr
 fable/               Fable.Ripple page (App.fs; Interop.fs binds the shared TS harness)
 fable-grouped/       the same app with one effect per line (only an index.html)
 vanilla/             vanilla JS page (no framework), the baseline
-Fable.Ripple/        optional local clone of Fable.Ripple, used instead of NuGet when present
+Fable.Ripple/        optional local checkout of Fable.Ripple, used instead of NuGet when present
 compare/ + index.html  compare page
 scripts/deploy.mjs   pushes dist/ to the gh-pages branch
 docs/                README images

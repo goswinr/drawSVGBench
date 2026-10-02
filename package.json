@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "postinstall": "dotnet tool restore",
-    "fable": "dotnet fable fable -c Release --noCache",
-    "dev": "dotnet fable watch fable --run vite",
+    "fable": "dotnet fable fable -c Release --noCache --exclude Fable.Ripple.Plugin",
+    "dev": "dotnet fable watch fable --exclude Fable.Ripple.Plugin --run vite",
     "build": "npm run fable && vite build",
     "preview": "vite preview",
     "bench": "npm run build && vite preview --open",

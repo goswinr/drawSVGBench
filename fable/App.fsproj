@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <!--
-    Fable.Ripple comes from the local fork in ../Fable.Ripple when it is there,
+    Fable.Ripple comes from the local checkout in ../Fable.Ripple when it is there,
     otherwise from NuGet. Set the environment variable FABLE_RIPPLE=nuget to force
     the packages.
   -->
@@ -26,8 +26,8 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(FableRippleSource)' == 'nuget'">
-    <PackageReference Include="Fable.Ripple" Version="1.0.0-beta.3" />
-    <PackageReference Include="Fable.Ripple.Dom" Version="1.0.0-beta.2" />
+    <PackageReference Include="Fable.Ripple" Version="1.0.0-beta.6" />
+    <PackageReference Include="Fable.Ripple.Dom" Version="1.0.0-beta.7" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(FableRippleSource)' == 'local'">
