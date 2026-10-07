@@ -426,7 +426,6 @@ function panelHtml(current: BenchApp['id']): string {
 		<div class="hb-title">
 			<i class="hb-swatch" data-fw="${info.id}"></i>
 			<strong>${info.name}</strong>
-			<span class="hb-ver" title="${info.version}">${info.version}</span>
 		</div>
 		<output class="hb-pill" data-out="pill" aria-live="off"></output>
 		<button type="button" class="hb-icon" data-act="collapse" title="Show / hide panel (H)" aria-label="Show or hide panel">
@@ -434,6 +433,7 @@ function panelHtml(current: BenchApp['id']): string {
 		</button>
 	</header>
 	<div class="hb-body">
+		<p class="hb-ver">${info.version}</p>
 		<nav class="hb-nav" aria-label="Frameworks">${nav}</nav>
 		<p class="hb-links"><a href="../">← Main page: compare all</a><a href="${REPO_URL}">Source on GitHub</a></p>
 

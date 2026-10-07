@@ -26,8 +26,8 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(FableRippleSource)' == 'nuget'">
-    <PackageReference Include="Fable.Ripple" Version="1.0.0-beta.6" />
-    <PackageReference Include="Fable.Ripple.Dom" Version="1.0.0-beta.7" />
+    <PackageReference Include="Fable.Ripple" Version="1.0.0-beta.7" />
+    <PackageReference Include="Fable.Ripple.Dom" Version="1.0.0-beta.8" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(FableRippleSource)' == 'local'">

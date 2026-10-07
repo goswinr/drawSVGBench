@@ -7,9 +7,10 @@
 
 /**
  * `fable-grouped` is the Fable.Ripple app with one effect per line instead of one per attribute.
+ * `fable-template` keeps per-attribute bindings but clones a shared line model with Html.template.
  * `vanilla` is no framework: plain DOM calls, the baseline.
  */
-export type FrameworkId = 'solid' | 'ripple' | 'fable' | 'fable-grouped' | 'vanilla';
+export type FrameworkId = 'solid' | 'ripple' | 'fable' | 'fable-grouped' | 'fable-template' | 'vanilla';
 
 export type ColorMode = 'uniform' | 'angle' | 'length' | 'index';
 export type WidthMode = 'uniform' | 'varied';

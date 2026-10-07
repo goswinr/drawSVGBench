@@ -21,7 +21,7 @@ let private background = Var.create ""
 
 let private count = Signal.map (fun (d: float[]) -> d.Length / 4) data
 
-// Only re-created when the line count changes; a same-size update leaves Html.each alone.
+// Only re-created when the line count changes; a same-size update keeps the list and its rows.
 let private indices =
     Signal.mapWith Signal.referenceEquals (fun n -> Array.init n id) count
 
@@ -42,16 +42,20 @@ let private applyStyle (s: LineStyle) =
 /// stroke and stroke-width only outside "uniform" mode.
 let private optionalAttr (name: string) (value: unit -> string) : DomItem =
     Apply(fun element ->
-        Signal.effect (fun () ->
-            let v = value ()
+        // Templates record this binding once, then attach it to each cloned line.
+        if Base.Recording.isActive () then
+            Base.Recording.markDynamic ()
+        else
+            Signal.effect (fun () ->
+                let v = value ()
 
-            // `isNull` compiles to `== null`, which also catches the `undefined` from TypeScript.
-            if isNull v then
-                element.removeAttribute name
-            else
-                element.setAttribute (name, v)
-        )
-        |> ignore
+                // `isNull` compiles to `== null`, which also catches the `undefined` from TypeScript.
+                if isNull v then
+                    element.removeAttribute name
+                else
+                    element.setAttribute (name, v)
+            )
+            |> ignore
     )
 
 let private line (i: int) : DomItem =
@@ -65,6 +69,19 @@ let private line (i: int) : DomItem =
             svgAttr.custom ("y2", fun () -> string data.Value.[o + 3])
             optionalAttr "stroke" (fun () -> lineStroke colorMode.Value data.Value i count.Value)
             optionalAttr "stroke-width" (fun () -> lineWidth widthMode.Value i)
+        ]
+
+/// The same six bindings, with the row index read inside each callback.
+/// Html.template runs this function once, before any row exists.
+let private lineTemplate (row: Signal<int>) : DomItem =
+    Svg.line
+        [
+            svgAttr.custom ("x1", fun () -> string data.Value.[row.Value * 4])
+            svgAttr.custom ("y1", fun () -> string data.Value.[row.Value * 4 + 1])
+            svgAttr.custom ("x2", fun () -> string data.Value.[row.Value * 4 + 2])
+            svgAttr.custom ("y2", fun () -> string data.Value.[row.Value * 4 + 3])
+            optionalAttr "stroke" (fun () -> lineStroke colorMode.Value data.Value row.Value count.Value)
+            optionalAttr "stroke-width" (fun () -> lineWidth widthMode.Value row.Value)
         ]
 
 /// The same line with ONE effect for all six attributes: the shape the Solid
@@ -128,9 +145,10 @@ let private lineGrouped (i: int) : DomItem =
             )
         ]
 
-/// `fable-grouped/index.html` loads this same app flagged to use `lineGrouped`.
-let private grouped =
-    Browser.Dom.document.documentElement.getAttribute "data-variant" = "grouped"
+/// The extra Fable pages load this same app with a different rendering variant.
+let private variant = Browser.Dom.document.documentElement.getAttribute "data-variant"
+let private grouped = variant = "grouped"
+let private templated = variant = "template"
 
 let private view () =
     Svg.svg
@@ -148,13 +166,10 @@ let private view () =
                     svgAttr.custom ("stroke-linecap", fun () -> linecap.Value)
                     svgAttr.custom ("stroke-dasharray", fun () -> dashArray dash.Value width.Value)
 
-                    Html.each
-                        (fun () -> indices.Value)
-                        id
-                        (if grouped then
-                             lineGrouped
-                         else
-                             line)
+                    if templated then
+                        Html.template (indices, id, lineTemplate)
+                    else
+                        Html.each (indices, id, if grouped then lineGrouped else line)
                 ]
         ]
 
@@ -165,6 +180,8 @@ startHarness
         member _.id =
             if grouped then
                 "fable-grouped"
+            elif templated then
+                "fable-template"
             else
                 "fable"
 

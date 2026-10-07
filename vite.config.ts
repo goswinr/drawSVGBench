@@ -23,7 +23,7 @@ function fableRippleVersion(): string {
 	const compiled = resolve(root, 'fable/App.fs.js');
 	const js = existsSync(compiled) ? readFileSync(compiled, 'utf8') : '';
 	if (!js.includes('/Fable.Ripple/src/')) {
-		return `${nugetVersion('Fable.Ripple')} · Dom ${nugetVersion('Fable.Ripple.Dom')}`;
+		return `Fable.Ripple ${nugetVersion('Fable.Ripple')} · Fable.Ripple.Dom ${nugetVersion('Fable.Ripple.Dom')} · NuGet`;
 	}
 	const git = (args: string) => {
 		try {
@@ -80,6 +80,7 @@ export default defineConfig({
 				ripple: resolve(root, 'ripple/index.html'),
 				fable: resolve(root, 'fable/index.html'),
 				fableGrouped: resolve(root, 'fable-grouped/index.html'),
+				fableTemplate: resolve(root, 'fable-template/index.html'),
 				vanilla: resolve(root, 'vanilla/index.html'),
 			},
 		},

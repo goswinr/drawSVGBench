@@ -14,6 +14,7 @@
 	--fw-ripple: #eb6834;
 	--fw-fable: #1baf7a;
 	--fw-fable-grouped: #eda100;
+	--fw-fable-template: #9b66df;
 	--fw-vanilla: #e87ba4;
 }
 
@@ -34,6 +35,7 @@
 		--fw-ripple: #d95926;
 		--fw-fable: #199e70;
 		--fw-fable-grouped: #c98500;
+		--fw-fable-template: #a475e4;
 		--fw-vanilla: #d55181;
 	}
 }
@@ -54,6 +56,7 @@
 	--fw-ripple: #d95926;
 	--fw-fable: #199e70;
 	--fw-fable-grouped: #c98500;
+	--fw-fable-template: #a475e4;
 	--fw-vanilla: #d55181;
 }
 
@@ -125,6 +128,11 @@ h2 {
 	margin-top: 8px;
 }
 
+.intro .build-info {
+	margin-top: 12px;
+	font-size: 13px;
+}
+
 .repo-link a {
 	color: var(--accent);
 	font-weight: 500;
@@ -152,6 +160,10 @@ h2 {
 }
 [data-fw='fable-grouped'] {
 	--fw: var(--fw-fable-grouped);
+}
+
+[data-fw='fable-template'] {
+	--fw: var(--fw-fable-template);
 }
 [data-fw='vanilla'] {
 	--fw: var(--fw-vanilla);

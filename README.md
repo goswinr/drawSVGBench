@@ -5,7 +5,7 @@ with a **vanilla JS** page (plain DOM calls, no framework) as the baseline.
 
 **Live demo: <https://goswinr.github.io/drawSVGBench/>** (see [Live demo](#live-demo) for its limits)
 
-![The compare page: bar charts of create, update, recolor and clear times for the five entries at 2,000 lines](docs/compare.png)
+![The compare page: create, update, recolor and clear times for all five entries at 1,000, 5,000 and 20,000 lines](docs/compare.png)
 
 The core data structure is one `Float64Array` of random floats; every 4 floats are one line
 (`x1 y1 x2 y2`, in pixels), at most 10% of the viewport width long. Each framework renders
@@ -15,12 +15,13 @@ timing code. Only the rendering layer differs.
 
 ## Current build
 
-The live demo was rebuilt on **2026-10-02** with **Fable 5.18.0** and the local Fable.Ripple
-checkout on [`main@83e4925`](https://github.com/fable-hub/Fable.Ripple/commit/83e4925).
-This is the source for **Fable.Ripple 1.0.0-beta.6** / **Fable.Ripple.Dom 1.0.0-beta.7**, also
-pinned as the NuGet fallback in [fable/App.fsproj](fable/App.fsproj).
+The live demo was rebuilt on **2026-10-07** with **Fable 5.18.0** and the NuGet packages
+**Fable.Ripple 1.0.0-beta.7** / **Fable.Ripple.Dom 1.0.0-beta.8**,
+pinned in [fable/App.fsproj](fable/App.fsproj). The deployment build uses `FABLE_RIPPLE=nuget`.
 The list-clear fixes are now upstream; later releases also skip unchanged DOM binding writes and
 reduce reactive bookkeeping. SolidJS remains at 1.9.15 and Ripple-TS at 0.4.2.
+The template entry uses the opt-in `Html.template` API introduced in Dom beta.8, as described in
+[the upstream performance update](https://github.com/fable-hub/Fable.Ripple/pull/7#issuecomment-6040011050).
 
 ## Results (2026-09-24 build)
 
@@ -51,9 +52,12 @@ up over earlier runs (headless Chrome, 1,000 to 100,000 lines):
   matches Solid and Ripple.
 - Recolor is mostly the browser's style recalculation, not framework work.
 
-The screenshot above is the compare page from a separate run at 2,000 lines, with the vanilla JS
-baseline. It was fastest in all four ops, 1.1–1.8× ahead of the others. The baseline was added after
-the run in the table, so it is not in the table yet.
+The screenshot above shows a separate comparison at 1,000, 5,000 and 20,000 lines, including the
+vanilla JS baseline, before the template entry and Dom beta.8 upgrade. Vanilla JS was fastest in
+11 of the 12 cells. The geometric mean ratios to the
+fastest in each cell were 1.27× for SolidJS, 1.29× for Ripple-TS, 1.36× for Fable.Ripple and 1.21×
+for Fable.Ripple (grouped), with vanilla JS at 1.00×. The baseline was added after the historical
+run in the table, so it is not in that table.
 
 ## Quick start
 
@@ -83,6 +87,8 @@ Pages:
 - `/solid/`, `/ripple/`, `/fable/`: each framework on its own, full-screen, with a control panel.
 - `/fable-grouped/`: the Fable.Ripple app again, with one effect per line instead of one per
   attribute (see below).
+- `/fable-template/`: the same per-attribute Fable bindings, using `Html.template` to clone an SVG
+  line model instead of building every line from scratch.
 - `/vanilla/`: no framework, the baseline (see below).
 
 Keys on the framework pages: <kbd>Space</kbd> new array · <kbd>A</kbd> animate · <kbd>C</kbd> clear ·
@@ -140,6 +146,7 @@ to the source.
 | Ripple-TS ([ripple/Stage.tsrx](ripple/Stage.tsrx)) | `track(Float64Array)`                            | keyed `@for`             | one render block per line (the compiler groups the attributes)    |
 | Fable.Ripple ([fable/App.fs](fable/App.fs))  | `Var.createWith Signal.referenceEquals float[]`  | `Html.each`              | one `svgAttr.custom` effect per attribute (6 per line)            |
 | Fable.Ripple (grouped), same file              | same                                             | same                     | one effect per line that writes all 6 attributes (`lineGrouped`)  |
+| Fable.Ripple (template), same file             | same                                             | `Html.template`          | the same 6 per-attribute bindings attached to cloned lines (`lineTemplate`) |
 
 The style fields are separate signals/tracked values/Vars in all three, so changing the width does
 not wake the per-line bindings.
@@ -152,13 +159,22 @@ are removed from the end, and a clear is one `textContent = ""`. A style change 
 attributes that changed, and touches every line only when the colour or width mode changes. The
 distance between a framework and this page is what the framework costs.
 
-**Why two Fable.Ripple entries.** Solid's and Ripple-TS's compilers turn an element's dynamic
+**Why three Fable.Ripple entries.** Solid's and Ripple-TS's compilers turn an element's dynamic
 attributes into one effect that re-evaluates them together and writes only the ones that changed.
 Fable.Ripple.Dom keeps these bindings separate: each `svgAttr.custom` binding is its own effect, so the idiomatic
 page creates, marks and tears down 6 reactive nodes per line where the others have 1. The grouped
 page (`fable-grouped/index.html` loads the same `App.fs.js` with `data-variant="grouped"`) writes that
 one effect by hand, with the public `Apply` + `Signal.effect` primitives. It shows how much of any
 gap is the per-attribute binding style rather than the reactive core.
+
+The template page keeps separate bindings and changes how the DOM elements are created.
+`Html.template` calls `lineTemplate` once to build an SVG line model, then clones it and attaches
+bindings for each row. Its row signal is read inside the binding callbacks; reading it while the
+model is being built would fail because no row exists yet. The custom `optionalAttr` helper uses
+`Base.Recording` so stroke and stroke-width bindings are recorded and replayed on each clone.
+This lets the benchmark compare template creation with both normal `Html.each` and grouped effects.
+Grouping remains a separate experiment: any changed source makes its effect evaluate all six
+attributes, which can add work when only the colour changes.
 
 ## Changes Fable.Ripple needed
 
@@ -178,13 +194,15 @@ original fork commits.
 
 The first three come with tests in the fork's suites.
 
-The app uses three choices in [fable/App.fs](fable/App.fs):
+The app uses four choices in [fable/App.fs](fable/App.fs):
 
 - `Var.createWith Signal.referenceEquals` for the data. `Var.create` compares with structural
   equality, which would walk the whole array on every write.
 - `optionalAttr`, a small `Apply` + `Signal.effect` helper, because `svgAttr.custom` always sets its
   attribute and the per-line `stroke` and `stroke-width` must be removed in uniform mode.
 - `lineGrouped` for the grouped entry: the same public primitives, one effect for all six attributes.
+- `lineTemplate` for the template entry: the same per-attribute bindings, with the row index read
+  inside each callback so one SVG line model can be reused.
 
 ### Why: clear was O(n²) in the older packages
 
@@ -211,13 +229,14 @@ compaction in `tearDown` only covered nodes within one scope, not sibling row sc
 **Clear**, shrinking the line count, and the untimed reset before each **Create** sample; create,
 update and recolor were not affected.
 
-The remaining gap between the two Fable.Ripple entries is the per-attribute effects described above.
+The historical gap between the original two Fable.Ripple entries is the per-attribute effects
+described above. The template entry adds a separate comparison of DOM creation strategies.
 
 ### Building against NuGet or a local checkout
 
 If `./Fable.Ripple` exists (a local clone, ignored by this repo's git), the F# page is built
 against its `src/` instead of the NuGet packages, and the page shows `fork <branch>@<commit>` as its
-version. The current checkout is `main@83e4925`; `perfClear` is only needed to reproduce the
+version. The live demo uses the NuGet packages; `perfClear` is only needed to reproduce the
 historical results. `npm run dev` also recompiles on edits to the checkout. To force the packages, set
 `FABLE_RIPPLE=nuget` (e.g. `$env:FABLE_RIPPLE='nuget'; npm run build` in PowerShell).
 
@@ -240,6 +259,7 @@ solid/               SolidJS page
 ripple/              Ripple-TS page (Stage.tsrx + a bridge so the harness can write tracked state)
 fable/               Fable.Ripple page (App.fs; Interop.fs binds the shared TS harness)
 fable-grouped/       the same app with one effect per line (only an index.html)
+fable-template/      the same app with Html.template cloning (only an index.html)
 vanilla/             vanilla JS page (no framework), the baseline
 Fable.Ripple/        optional local checkout of Fable.Ripple, used instead of NuGet when present
 compare/ + index.html  compare page

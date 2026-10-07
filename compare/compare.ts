@@ -2,7 +2,7 @@
 // one at a time) and charts the medians side by side.
 
 import './compare.css';
-import { FRAMEWORKS } from '../shared/frameworks';
+import { FRAMEWORKS, frameworkInfo } from '../shared/frameworks';
 import { COUNTS, DEFAULT_STYLE, type ColorMode, type FrameworkId } from '../shared/lines';
 import { DEFAULT_BUDGET_MS, OPS, stats, type Env, type OpName, type Progress, type Sample, type Stats, type SuiteConfig, type SuiteResult } from '../shared/measure';
 import type { BenchHandle } from '../shared/harness';
@@ -102,12 +102,15 @@ let metric: Metric = 'total';
 // ------------------------------------------------------------------ config form
 
 function renderCards() {
+	$('#build-info').textContent = `F# build: ${frameworkInfo('fable').version}`;
 	const notes: Record<FrameworkId, string> = {
 		solid: '<code>createSignal(Float64Array)</code> · <code>&lt;For&gt;</code> over indices · one render effect per line (the compiler groups its attributes)',
 		ripple: '<code>track(Float64Array)</code> · keyed <code>@for</code> over indices · <code>flushSync</code> around each write',
 		fable: '<code>Var&lt;float[]&gt;</code> · <code>Html.each</code> over indices · one binding per attribute, synchronous flush',
 		'fable-grouped':
 			'The same F# app, but each line has one effect that writes all six attributes, the shape the Solid and Ripple-TS compilers emit',
+		'fable-template':
+			'<code>Html.template</code> builds one SVG line model, then clones it for each index and attaches the same six per-attribute bindings',
 		vanilla: 'The baseline: an array of <code>&lt;line&gt;</code> elements written with <code>setAttribute</code>, only where a value changed',
 	};
 	$('#cards').innerHTML = FRAMEWORKS.map(
